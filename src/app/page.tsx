@@ -22,12 +22,18 @@ export default function Home() {
               お気に入りの商品を見つけてください
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg">
-                <Link href="/products">商品を探す</Link>
-              </Button>
-              <Button variant="outline" size="lg" asChild>
-                <Link href="/categories">カテゴリーから探す</Link>
-              </Button>
+              <Link
+                href="/products"
+                className="inline-flex items-center justify-center px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium rounded-md transition-colors"
+              >
+                商品を探す
+              </Link>
+              <Link
+                href="/categories"
+                className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-md transition-colors"
+              >
+                カテゴリーから探す
+              </Link>
             </div>
           </div>
         </div>
@@ -74,9 +80,12 @@ export default function Home() {
                 <p className="text-gray-600 mb-6">
                   期間限定の特別価格で人気商品をお得にゲット！
                 </p>
-                <Button asChild>
-                  <Link href="/deals">セール商品を見る</Link>
-                </Button>
+                <Link
+                  href="/deals"
+                  className="inline-flex items-center justify-center px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium rounded-md transition-colors"
+                >
+                  セール商品を見る
+                </Link>
               </CardContent>
             </Card>
             <Card variant="elevated">
@@ -87,9 +96,12 @@ export default function Home() {
                 <p className="text-gray-600 mb-6">
                   厳選されたおすすめ商品をチェックしてみてください。
                 </p>
-                <Button variant="outline" asChild>
-                  <Link href="/recommended">おすすめを見る</Link>
-                </Button>
+                <Link
+                  href="/recommended"
+                  className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-md transition-colors"
+                >
+                  おすすめを見る
+                </Link>
               </CardContent>
             </Card>
           </div>

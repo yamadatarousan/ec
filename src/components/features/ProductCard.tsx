@@ -122,16 +122,16 @@ export function ProductCard({
 
             {/* ディスカウントバッジ */}
             {hasDiscount && (
-              <Badge variant="error" className="absolute top-2 left-2 z-10">
+              <div className="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
                 -{discountPercentage}%
-              </Badge>
+              </div>
             )}
 
             {/* 在庫切れバッジ */}
             {product.stock === 0 && (
-              <Badge variant="error" className="absolute top-2 right-2 z-10">
+              <div className="absolute top-2 right-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
                 在庫切れ
-              </Badge>
+              </div>
             )}
 
             {/* お気に入りボタン */}
@@ -185,7 +185,7 @@ export function ProductCard({
           )}
 
           {/* 価格 */}
-          <div className="space-y-1">
+          <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <span
                 className={cn(
@@ -203,7 +203,7 @@ export function ProductCard({
             </div>
 
             {/* 配送情報 */}
-            <div className="text-xs text-gray-600">送料無料</div>
+            <div className="text-xs text-green-600 font-medium">✓ 送料無料</div>
           </div>
 
           {/* アクションボタン */}

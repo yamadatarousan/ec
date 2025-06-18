@@ -224,30 +224,38 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
 
               {/* アクションボタン */}
               <div className="space-y-3">
-                <Button
+                <button
                   onClick={handleAddToCart}
                   disabled={product.stock === 0}
-                  className="w-full"
-                  size="lg"
+                  className={cn(
+                    'w-full py-3 px-6 rounded-md font-medium transition-colors flex items-center justify-center space-x-2',
+                    product.stock === 0
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-yellow-400 hover:bg-yellow-500 text-gray-900'
+                  )}
                 >
-                  <ShoppingCart className="h-5 w-5 mr-2" />
-                  {product.stock === 0 ? '在庫切れ' : 'カートに追加'}
-                </Button>
+                  <ShoppingCart className="h-5 w-5" />
+                  <span>
+                    {product.stock === 0 ? '在庫切れ' : 'カートに追加'}
+                  </span>
+                </button>
 
-                <Button
+                <button
                   onClick={handleFavoriteToggle}
-                  variant="outline"
-                  className="w-full"
-                  size="lg"
+                  className="w-full py-3 px-6 border border-gray-300 rounded-md font-medium hover:bg-gray-50 transition-colors flex items-center justify-center space-x-2"
                 >
                   <Heart
                     className={cn(
-                      'h-5 w-5 mr-2',
-                      isFavorited ? 'fill-red-500 text-red-500' : ''
+                      'h-5 w-5',
+                      isFavorited
+                        ? 'fill-red-500 text-red-500'
+                        : 'text-gray-600'
                     )}
                   />
-                  {isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
-                </Button>
+                  <span>
+                    {isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
+                  </span>
+                </button>
               </div>
             </CardContent>
           </Card>

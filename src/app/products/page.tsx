@@ -151,44 +151,44 @@ export default function ProductsPage() {
           </select>
 
           {/* 表示モード切り替え */}
-          <div className="flex border border-gray-300 rounded-md">
-            <Button
-              variant={viewMode === 'grid' ? 'primary' : 'ghost'}
-              size="sm"
+          <div className="flex border border-gray-300 rounded-md overflow-hidden">
+            <button
               onClick={() => setViewMode('grid')}
-              className="rounded-r-none"
+              className={cn(
+                'px-3 py-2 text-sm transition-colors',
+                viewMode === 'grid'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              )}
             >
               <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'primary' : 'ghost'}
-              size="sm"
+            </button>
+            <button
               onClick={() => setViewMode('list')}
-              className="rounded-l-none"
+              className={cn(
+                'px-3 py-2 text-sm transition-colors border-l border-gray-300',
+                viewMode === 'list'
+                  ? 'bg-gray-900 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-50'
+              )}
             >
               <List className="h-4 w-4" />
-            </Button>
+            </button>
           </div>
 
           {/* フィルター切り替え */}
-          <Button
-            variant="outline"
-            size="sm"
+          <button
             onClick={() => setShowFilters(!showFilters)}
-            className="relative"
+            className="relative px-4 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors flex items-center space-x-2"
           >
-            <Filter className="h-4 w-4 mr-2" />
-            フィルター
+            <Filter className="h-4 w-4" />
+            <span>フィルター</span>
             {activeFiltersCount > 0 && (
-              <Badge
-                variant="error"
-                size="sm"
-                className="absolute -top-2 -right-2 h-5 w-5 text-xs"
-              >
+              <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
                 {activeFiltersCount}
-              </Badge>
+              </span>
             )}
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -205,14 +205,12 @@ export default function ProductsPage() {
               <div className="flex items-center justify-between">
                 <h3 className="font-medium">フィルター</h3>
                 {activeFiltersCount > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
+                  <button
                     onClick={resetFilters}
-                    className="text-xs"
+                    className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
                   >
                     リセット
-                  </Button>
+                  </button>
                 )}
               </div>
 
@@ -321,16 +319,16 @@ export default function ProductsPage() {
           {filteredAndSortedProducts.length === 0 ? (
             <Card>
               <CardContent className="p-12 text-center">
-                <p className="text-gray-500 text-lg">
+                <div className="text-6xl mb-4">🔍</div>
+                <p className="text-gray-500 text-lg mb-4">
                   条件に一致する商品が見つかりませんでした。
                 </p>
-                <Button
-                  variant="outline"
+                <button
                   onClick={resetFilters}
-                  className="mt-4"
+                  className="px-4 py-2 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition-colors"
                 >
                   フィルターをリセット
-                </Button>
+                </button>
               </CardContent>
             </Card>
           ) : (
