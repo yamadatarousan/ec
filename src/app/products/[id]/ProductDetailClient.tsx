@@ -11,29 +11,80 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { Button, Badge, Card, CardContent } from '@/components/ui';
-import { Product } from '@/types';
 import { formatPrice, cn } from '@/lib/utils';
+import { Decimal } from '@prisma/client/runtime/library';
 
 interface ProductDetailClientProps {
-  product: Product;
+  product: {
+    id: string;
+    name: string;
+    description: string;
+    price: Decimal;
+    comparePrice?: Decimal | null;
+    sku: string;
+    stock: number;
+    weight?: Decimal | null;
+    dimensions?: string | null;
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+    images: {
+      id: string;
+      url: string;
+      alt?: string | null;
+    }[];
+    reviews: {
+      id: string;
+      rating: number;
+      title?: string | null;
+      comment: string;
+      user: {
+        name?: string | null;
+        avatar?: string | null;
+      };
+    }[];
+    _count: {
+      reviews: number;
+    };
+  };
+  relatedProducts: {
+    id: string;
+    name: string;
+    description: string;
+    price: Decimal;
+    comparePrice?: Decimal | null;
+    category: {
+      name: string;
+    };
+    images: {
+      url: string;
+      alt?: string | null;
+    }[];
+  }[];
 }
 
 /**
  * 商品詳細ページのクライアントコンポーネント
  * 商品詳細情報、画像ギャラリー、購入ボタンなどを表示
  */
-export function ProductDetailClient({ product }: ProductDetailClientProps) {
+export function ProductDetailClient({
+  product,
+  relatedProducts,
+}: ProductDetailClientProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorited, setIsFavorited] = useState(false);
 
   const primaryImage = product.images[selectedImageIndex] || product.images[0];
-  const hasDiscount =
-    product.comparePrice && product.comparePrice > product.price;
+  const price = Number(product.price);
+  const comparePrice = product.comparePrice
+    ? Number(product.comparePrice)
+    : null;
+  const hasDiscount = comparePrice && comparePrice > price;
   const discountPercentage = hasDiscount
-    ? Math.round(
-        ((product.comparePrice! - product.price) / product.comparePrice!) * 100
-      )
+    ? Math.round(((comparePrice! - price) / comparePrice!) * 100)
     : 0;
 
   /**
@@ -145,16 +196,26 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             </h1>
 
             {/* 評価 */}
-            {product.averageRating && (
+            {product.reviews.length > 0 && (
               <div className="flex items-center space-x-3 mb-4">
                 <div className="flex items-center space-x-1">
-                  {renderStars(product.averageRating)}
+                  {renderStars(
+                    product.reviews.reduce(
+                      (sum, review) => sum + review.rating,
+                      0
+                    ) / product.reviews.length
+                  )}
                 </div>
                 <span className="text-lg font-medium">
-                  {product.averageRating.toFixed(1)}
+                  {(
+                    product.reviews.reduce(
+                      (sum, review) => sum + review.rating,
+                      0
+                    ) / product.reviews.length
+                  ).toFixed(1)}
                 </span>
                 <span className="text-gray-600">
-                  ({product.reviewCount}件のレビュー)
+                  ({product._count.reviews}件のレビュー)
                 </span>
               </div>
             )}
@@ -164,11 +225,11 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           <div className="space-y-2">
             <div className="flex items-center space-x-4">
               <span className="text-3xl font-bold text-gray-900">
-                {formatPrice(product.price)}
+                {formatPrice(price)}
               </span>
               {hasDiscount && (
                 <span className="text-xl text-gray-500 line-through">
-                  {formatPrice(product.comparePrice!)}
+                  {formatPrice(comparePrice!)}
                 </span>
               )}
             </div>
@@ -291,7 +352,7 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               {product.weight && (
                 <div className="flex justify-between">
                   <dt className="text-gray-600">重量:</dt>
-                  <dd className="font-medium">{product.weight}kg</dd>
+                  <dd className="font-medium">{Number(product.weight)}kg</dd>
                 </div>
               )}
               {product.dimensions && (
