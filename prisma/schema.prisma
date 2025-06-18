@@ -1,0 +1,238 @@
+// ECサイト用Prismaスキーマファイル
+// 詳細: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// ユーザーテーブル
+/// 顧客情報を管理
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String
+  role      UserRole @default(CUSTOMER)
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // リレーション
+  orders    Order[]
+  cart      CartItem[]
+  favorites Favorite[]
+  addresses Address[]
+  reviews   Review[]
+
+  @@map("users")
+}
+
+/// ユーザー権限
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+/// 商品カテゴリ
+/// 商品分類を管理
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  slug        String   @unique
+  imageUrl    String?
+  parentId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // リレーション
+  parent   Category?  @relation("CategoryParent", fields: [parentId], references: [id])
+  children Category[] @relation("CategoryParent")
+  products Product[]
+
+  @@map("categories")
+}
+
+/// 商品テーブル
+/// 販売商品の情報を管理
+model Product {
+  id          String        @id @default(cuid())
+  name        String
+  description String
+  price       Decimal       @db.Decimal(10, 2)
+  comparePrice Decimal?     @db.Decimal(10, 2)
+  sku         String        @unique
+  stock       Int           @default(0)
+  status      ProductStatus @default(DRAFT)
+  weight      Decimal?      @db.Decimal(8, 2)
+  dimensions  String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // 関連情報
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  // リレーション
+  images      ProductImage[]
+  cartItems   CartItem[]
+  orderItems  OrderItem[]
+  favorites   Favorite[]
+  reviews     Review[]
+
+  @@map("products")
+}
+
+/// 商品ステータス
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+  ARCHIVED
+}
+
+/// 商品画像
+/// 商品に関連する画像を管理
+model ProductImage {
+  id        String   @id @default(cuid())
+  url       String
+  alt       String?
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_images")
+}
+
+/// ショッピングカート
+/// ユーザーのカート内商品を管理
+model CartItem {
+  id        String   @id @default(cuid())
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("cart_items")
+}
+
+/// お気に入り
+/// ユーザーのお気に入り商品を管理
+model Favorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("favorites")
+}
+
+/// 注文テーブル
+/// 注文情報を管理
+model Order {
+  id            String      @id @default(cuid())
+  orderNumber   String      @unique
+  status        OrderStatus @default(PENDING)
+  totalAmount   Decimal     @db.Decimal(10, 2)
+  shippingCost  Decimal     @db.Decimal(8, 2) @default(0)
+  taxAmount     Decimal     @db.Decimal(8, 2) @default(0)
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  addressId String
+  address   Address @relation(fields: [addressId], references: [id])
+
+  // リレーション
+  items OrderItem[]
+
+  @@map("orders")
+}
+
+/// 注文ステータス
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+/// 注文明細
+/// 注文に含まれる商品の詳細を管理
+model OrderItem {
+  id       String  @id @default(cuid())
+  quantity Int
+  price    Decimal @db.Decimal(10, 2)
+
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+/// 住所テーブル
+/// ユーザーの配送先住所を管理
+model Address {
+  id           String  @id @default(cuid())
+  name         String
+  company      String?
+  address1     String
+  address2     String?
+  city         String
+  state        String
+  zipCode      String
+  country      String  @default("JP")
+  phone        String?
+  isDefault    Boolean @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // リレーション
+  orders Order[]
+
+  @@map("addresses")
+}
+
+/// レビューテーブル
+/// 商品レビューを管理
+model Review {
+  id        String   @id @default(cuid())
+  rating    Int      // 1-5の評価
+  title     String?
+  comment   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId    String
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@map("reviews")
+}
