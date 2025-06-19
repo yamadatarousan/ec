@@ -16,6 +16,7 @@ export {
   type CardProps,
 } from './Card';
 export { Badge, type BadgeProps } from './Badge';
+export { Checkbox } from './Checkbox';
 export { ErrorBoundary, SimpleErrorBoundary } from './ErrorBoundary';
 export { ToastProvider, useToast, useErrorHandler } from './Toast';
 export type { Toast, ToastType } from './Toast';

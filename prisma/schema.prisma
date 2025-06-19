@@ -23,11 +23,12 @@ model User {
   updatedAt DateTime @updatedAt
 
   // リレーション
-  orders    Order[]
-  cart      CartItem[]
-  favorites Favorite[]
-  addresses Address[]
-  reviews   Review[]
+  orders       Order[]
+  cart         CartItem[]
+  favorites    Favorite[]
+  addresses    Address[]
+  reviews      Review[]
+  productViews ProductView[]
 
   @@map("users")
 }
@@ -79,11 +80,12 @@ model Product {
   category   Category @relation(fields: [categoryId], references: [id])
 
   // リレーション
-  images      ProductImage[]
-  cartItems   CartItem[]
-  orderItems  OrderItem[]
-  favorites   Favorite[]
-  reviews     Review[]
+  images       ProductImage[]
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+  favorites    Favorite[]
+  reviews      Review[]
+  productViews ProductView[]
 
   @@map("products")
 }
@@ -235,4 +237,19 @@ model Review {
 
   @@unique([userId, productId])
   @@map("reviews")
+}
+
+/// 商品閲覧履歴
+/// ユーザーの商品閲覧を追跡
+model ProductView {
+  id        String   @id @default(cuid())
+  viewedAt  DateTime @default(now())
+  sessionId String?  // 未ログインユーザー用セッションID
+
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("product_views")
 }

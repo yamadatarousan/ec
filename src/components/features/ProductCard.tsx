@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Star, Heart, ShoppingCart } from 'lucide-react';
+import { Star, ShoppingCart } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -15,6 +15,7 @@ import {
 import { Product } from '@/types';
 import { formatPrice, cn } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
+import { WishlistButton } from './WishlistButton';
 
 interface ProductCardProps {
   product: Product;
@@ -32,7 +33,6 @@ function ProductCard({
   variant = 'default',
   showQuickActions = true,
 }: ProductCardProps) {
-  const [isFavorited, setIsFavorited] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const { addToCart } = useCart();
@@ -56,19 +56,6 @@ function ProductCard({
       : 0;
     return { hasDiscount, discountPercentage };
   }, [product.price, product.comparePrice]);
-
-  /**
-   * お気に入りトグル処理
-   */
-  const handleFavoriteToggle = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsFavorited(!isFavorited);
-      // TODO: お気に入りAPI呼び出し
-    },
-    [isFavorited]
-  );
 
   /**
    * カートに追加処理
@@ -189,22 +176,14 @@ function ProductCard({
 
             {/* お気に入りボタン */}
             {showQuickActions && (
-              <button
-                onClick={handleFavoriteToggle}
-                className={cn(
-                  'absolute top-2 right-2 p-2 rounded-full transition-all duration-200',
-                  'bg-white/80 hover:bg-white shadow-md',
-                  'opacity-0 group-hover:opacity-100',
-                  isFavorited && 'opacity-100'
-                )}
-              >
-                <Heart
-                  className={cn(
-                    'h-4 w-4 transition-colors duration-200',
-                    isFavorited ? 'text-red-500 fill-red-500' : 'text-gray-600'
-                  )}
+              <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <WishlistButton
+                  productId={product.id}
+                  size="sm"
+                  variant="ghost"
+                  className="bg-white/80 hover:bg-white shadow-md rounded-full p-2"
                 />
-              </button>
+              </div>
             )}
           </div>
         </div>

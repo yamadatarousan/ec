@@ -1,21 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import {
-  Star,
-  Heart,
-  ShoppingCart,
-  Truck,
-  Shield,
-  RotateCcw,
-} from 'lucide-react';
+import { Star, ShoppingCart, Truck, Shield, RotateCcw } from 'lucide-react';
 import { Button, Badge, Card, CardContent } from '@/components/ui';
 import { formatPrice, cn } from '@/lib/utils';
 import { useCart } from '@/contexts/CartContext';
 import { ProductCard } from '@/components/features/ProductCard';
 import { ReviewForm, ReviewStats } from '@/components/features/ReviewForm';
 import { ReviewList } from '@/components/features/ReviewList';
+import { WishlistButton } from '@/components/features/WishlistButton';
+import { RecommendedProducts } from '@/components/features/RecommendedProducts';
+import { useProductView } from '@/hooks/useProductView';
 import { ProductStatus } from '@/types/product';
 
 interface ProductDetailClientProps {
@@ -79,10 +75,15 @@ export function ProductDetailClient({
 }: ProductDetailClientProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [isFavorited, setIsFavorited] = useState(false);
   const [activeTab, setActiveTab] = useState('description');
   const [reviewRefreshTrigger, setReviewRefreshTrigger] = useState(0);
   const { addToCart, isLoading } = useCart();
+  const { trackView } = useProductView();
+
+  // 商品閲覧を記録
+  useEffect(() => {
+    trackView(product.id);
+  }, [product.id, trackView]);
 
   const primaryImage = product.images[selectedImageIndex] || product.images[0];
   const price = product.price;
@@ -118,14 +119,6 @@ export function ProductDetailClient({
     } catch (error) {
       console.error('カートに追加できませんでした:', error);
     }
-  };
-
-  /**
-   * お気に入りトグル処理
-   */
-  const handleFavoriteToggle = () => {
-    setIsFavorited(!isFavorited);
-    // TODO: お気に入りAPI呼び出し
   };
 
   return (
@@ -313,22 +306,11 @@ export function ProductDetailClient({
                   </span>
                 </button>
 
-                <button
-                  onClick={handleFavoriteToggle}
-                  className="w-full py-3 px-6 border border-gray-300 rounded-md font-medium hover:bg-gray-50 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <Heart
-                    className={cn(
-                      'h-5 w-5',
-                      isFavorited
-                        ? 'fill-red-500 text-red-500'
-                        : 'text-gray-600'
-                    )}
-                  />
-                  <span>
-                    {isFavorited ? 'お気に入りから削除' : 'お気に入りに追加'}
-                  </span>
-                </button>
+                <WishlistButton
+                  productId={product.id}
+                  showText={true}
+                  className="w-full py-3 px-6 border border-gray-300 rounded-md font-medium hover:bg-gray-50 transition-colors"
+                />
               </div>
             </CardContent>
           </Card>
@@ -595,6 +577,35 @@ export function ProductDetailClient({
           </div>
         </div>
       )}
+
+      {/* 推薦商品セクション */}
+      <div className="mt-16">
+        <RecommendedProducts
+          title="あなたにおすすめの商品"
+          type="general"
+          excludeProductIds={[product.id]}
+          limit={8}
+        />
+      </div>
+
+      <div className="mt-16">
+        <RecommendedProducts
+          title="この商品を見た人はこちらも見ています"
+          type="collaborative"
+          excludeProductIds={[product.id]}
+          limit={6}
+        />
+      </div>
+
+      <div className="mt-16">
+        <RecommendedProducts
+          title="同じカテゴリの人気商品"
+          type="content-based"
+          categoryId={product.category.id}
+          excludeProductIds={[product.id]}
+          limit={6}
+        />
+      </div>
     </div>
   );
 }

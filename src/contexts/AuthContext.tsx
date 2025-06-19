@@ -65,11 +65,15 @@ function authReducer(state: AuthState, action: AuthAction): AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  login: (credentials: LoginRequest) => Promise<void>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{ success: boolean; user?: AuthUser; error?: string }>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   updateProfile: (data: { name: string; email: string }) => Promise<void>;
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -102,10 +106,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ログイン
-  const login = async (credentials: LoginRequest) => {
+  const login = async (email: string, password: string) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      const data = await apiPost('/api/auth/login', credentials);
+      const data = await apiPost('/api/auth/login', { email, password });
 
       // トークンをローカルストレージに保存
       localStorage.setItem('auth_token', data.token);
@@ -114,12 +118,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         type: 'SET_USER',
         payload: { user: data.user, token: data.token },
       });
+
+      return { success: true, user: data.user };
     } catch (error) {
       dispatch({ type: 'SET_LOADING', payload: false });
-      if (error instanceof ApiError) {
-        throw new Error(error.message);
-      }
-      throw error;
+      const errorMessage =
+        error instanceof ApiError ? error.message : 'ログインに失敗しました';
+      return { success: false, error: errorMessage };
     }
   };
 
@@ -187,6 +192,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     refreshUser,
     updateProfile,
+    loading: state.isLoading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

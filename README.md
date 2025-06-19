@@ -23,20 +23,20 @@ graph TB
         D --> E[Cart Context]
         D --> F[Auth Context]
     end
-    
+
     subgraph "バックエンド"
         G[API Routes] --> H[Prisma ORM]
         H --> I[PostgreSQL]
         G --> J[JWT認証]
         G --> K[ミドルウェア]
     end
-    
+
     subgraph "外部サービス"
         L[Vercel Deployment]
         M[GitHub Actions CI/CD]
         N[Unsplash Images]
     end
-    
+
     A --> G
     J --> F
     I --> H
@@ -55,7 +55,7 @@ graph LR
         A --> D[contexts/]
         A --> E[lib/]
         A --> F[types/]
-        
+
         B --> G[pages & API routes]
         C --> H[UI Components]
         C --> I[Feature Components]
@@ -68,25 +68,27 @@ graph LR
 ## 🛒 主要機能フロー
 
 ### ユーザー認証フロー
+
 ```mermaid
 sequenceDiagram
     participant U as ユーザー
     participant F as フロントエンド
     participant A as API
     participant D as データベース
-    
+
     U->>F: ログイン要求
     F->>A: POST /api/auth/login
     A->>D: ユーザー認証
     D-->>A: ユーザー情報
     A-->>F: JWT トークン
     F-->>U: ログイン完了
-    
+
     Note over F,A: JWT はローカルストレージに保存
     Note over F,A: 以降のAPIリクエストで認証ヘッダー使用
 ```
 
 ### 商品購入フロー
+
 ```mermaid
 sequenceDiagram
     participant U as ユーザー
@@ -94,11 +96,11 @@ sequenceDiagram
     participant C as カート
     participant O as 注文
     participant D as データベース
-    
+
     U->>P: 商品を選択
     P->>C: カートに追加
     C->>D: カート更新
-    
+
     U->>C: チェックアウト
     C->>O: 注文作成
     O->>D: 注文データ保存
@@ -109,6 +111,7 @@ sequenceDiagram
 ## 🔧 技術スタック
 
 ### フロントエンド
+
 - **Next.js 15**: React フレームワーク（App Router使用）
 - **TypeScript**: 型安全性
 - **TailwindCSS**: スタイリング
@@ -116,6 +119,7 @@ sequenceDiagram
 - **React Hook Form**: フォーム管理
 
 ### バックエンド
+
 - **Next.js API Routes**: サーバーサイドAPI
 - **Prisma**: ORM（データベース操作）
 - **PostgreSQL**: データベース
@@ -123,6 +127,7 @@ sequenceDiagram
 - **bcryptjs**: パスワードハッシュ化
 
 ### 開発・デプロイ
+
 - **GitHub Actions**: CI/CD パイプライン
 - **Vercel**: ホスティングプラットフォーム
 - **ESLint & Prettier**: コード品質管理
@@ -140,7 +145,7 @@ erDiagram
         createdAt DateTime
         updatedAt DateTime
     }
-    
+
     Category {
         id String PK
         name String
@@ -149,7 +154,7 @@ erDiagram
         createdAt DateTime
         updatedAt DateTime
     }
-    
+
     Product {
         id String PK
         name String
@@ -163,7 +168,7 @@ erDiagram
         createdAt DateTime
         updatedAt DateTime
     }
-    
+
     ProductImage {
         id String PK
         productId String FK
@@ -171,7 +176,7 @@ erDiagram
         alt String
         order Int
     }
-    
+
     CartItem {
         id String PK
         userId String FK
@@ -180,7 +185,7 @@ erDiagram
         createdAt DateTime
         updatedAt DateTime
     }
-    
+
     Order {
         id String PK
         userId String FK
@@ -191,7 +196,7 @@ erDiagram
         createdAt DateTime
         updatedAt DateTime
     }
-    
+
     OrderItem {
         id String PK
         orderId String FK
@@ -199,7 +204,7 @@ erDiagram
         quantity Int
         price Decimal
     }
-    
+
     Address {
         id String PK
         userId String FK
@@ -212,7 +217,7 @@ erDiagram
         phone String
         isDefault Boolean
     }
-    
+
     Review {
         id String PK
         userId String FK
@@ -239,38 +244,40 @@ erDiagram
 ## 🚀 パフォーマンス最適化
 
 ### React最適化
+
 ```mermaid
 graph TD
     A[React最適化] --> B[React.memo]
     A --> C[useMemo]
     A --> D[useCallback]
-    
+
     B --> E[ProductCard]
     B --> F[Header]
     B --> G[SearchSuggestions]
-    
+
     C --> H[高コスト計算のメモ化]
     C --> I[画像処理]
     C --> J[価格計算]
-    
+
     D --> K[イベントハンドラー]
     D --> L[API呼び出し]
     D --> M[状態更新関数]
 ```
 
 ### キャッシュ戦略
+
 ```mermaid
 graph TB
     A[キャッシュシステム] --> B[メモリキャッシュ]
     A --> C[localStorage]
-    
+
     B --> D[商品データ: 30秒]
     B --> E[商品詳細: 5分]
     B --> F[カート情報: 30秒]
-    
+
     C --> G[カテゴリ: 30分]
     C --> H[検索結果: 1分]
-    
+
     I[API Client] --> A
     J[Context API] --> A
 ```
@@ -282,13 +289,13 @@ graph LR
     A[デバイス対応] --> B[スマホ: ~768px]
     A --> C[タブレット: 768px~1024px]
     A --> D[PC: 1024px~]
-    
+
     B --> E[モバイルメニュー]
     B --> F[縦型レイアウト]
-    
+
     C --> G[グリッドレイアウト]
     C --> H[サイドバー折りたたみ]
-    
+
     D --> I[フルレイアウト]
     D --> J[ホバーエフェクト]
 ```
@@ -304,6 +311,7 @@ graph LR
 ## 🛠️ 開発環境セットアップ
 
 ### 前提条件
+
 - Node.js 18+
 - PostgreSQL
 - npm または yarn
@@ -352,12 +360,12 @@ graph LR
     E --> F[テスト実行]
     F --> G[ビルド]
     G --> H[Vercel デプロイ]
-    
+
     subgraph "セキュリティ"
         I[依存関係スキャン]
         J[コード解析]
     end
-    
+
     B --> I
     B --> J
 ```
@@ -365,22 +373,26 @@ graph LR
 ## 📋 API エンドポイント
 
 ### 認証
+
 - `POST /api/auth/login` - ユーザーログイン
 - `POST /api/auth/register` - ユーザー登録
 - `GET /api/auth/me` - 現在のユーザー情報取得
 
 ### 商品
+
 - `GET /api/products` - 商品一覧取得
 - `GET /api/products/[id]` - 商品詳細取得
 - `GET /api/categories` - カテゴリ一覧取得
 
 ### カート
+
 - `GET /api/cart` - カート内容取得
 - `POST /api/cart` - カートに商品追加
 - `PATCH /api/cart/[productId]` - カート内商品数量更新
 - `DELETE /api/cart/[productId]` - カートから商品削除
 
 ### 注文
+
 - `GET /api/orders` - 注文履歴取得
 - `POST /api/orders` - 新規注文作成
 - `GET /api/orders/[id]` - 注文詳細取得
@@ -408,4 +420,4 @@ graph LR
 
 **開発者**: Claude Code Assistant  
 **技術スタック**: Next.js 15, TypeScript, Prisma, PostgreSQL, TailwindCSS  
-**デプロイ**: Vercel  
+**デプロイ**: Vercel

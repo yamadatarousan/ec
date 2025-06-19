@@ -9,20 +9,31 @@ export async function GET(request: NextRequest) {
     // フィルター設定
     const filters = {
       category: searchParams.get('category') || undefined,
+      categories: searchParams.get('categories')?.split(',') || undefined,
       minPrice: searchParams.get('minPrice')
         ? Number(searchParams.get('minPrice'))
         : undefined,
       maxPrice: searchParams.get('maxPrice')
         ? Number(searchParams.get('maxPrice'))
         : undefined,
+      minRating: searchParams.get('minRating')
+        ? Number(searchParams.get('minRating'))
+        : undefined,
+      inStock: searchParams.get('inStock') === 'true' ? true : undefined,
+      onSale: searchParams.get('onSale') === 'true' ? true : undefined,
       search: searchParams.get('search') || undefined,
       status: (searchParams.get('status') as ProductStatus) || 'ACTIVE',
+      tags: searchParams.get('tags')?.split(',') || undefined,
     };
 
     // ソート設定
     const sortField =
-      (searchParams.get('sortBy') as 'name' | 'price' | 'createdAt') ||
-      'createdAt';
+      (searchParams.get('sortBy') as
+        | 'name'
+        | 'price'
+        | 'createdAt'
+        | 'rating'
+        | 'popularity') || 'createdAt';
     const sortDirection =
       (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc';
     const sort = { field: sortField, direction: sortDirection };

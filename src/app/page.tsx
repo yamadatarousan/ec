@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Button, Card, CardContent } from '@/components/ui';
+import { RecommendedProducts } from '@/components/features/RecommendedProducts';
 
 /**
  * ホームページコンポーネント
@@ -106,6 +107,23 @@ export default function Home() {
             </Card>
           </div>
         </div>
+      </section>
+
+      {/* 推薦商品セクション */}
+      <section className="container-custom py-12">
+        <RecommendedProducts
+          title="最近閲覧した商品"
+          type="recent"
+          limit={6}
+          className="mb-12"
+        />
+
+        <RecommendedProducts
+          title="あなたにおすすめの商品"
+          type="general"
+          limit={8}
+          className="mb-12"
+        />
       </section>
     </div>
   );
