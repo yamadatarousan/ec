@@ -1,6 +1,9 @@
 /**
  * 認証付きAPI呼び出しのためのクライアント
+ * キャッシュ機能付き
  */
+
+import { cache, apiCache } from './cache';
 
 interface ApiResponse<T = any> {
   data?: T;
@@ -64,22 +67,56 @@ export async function authenticatedFetch(
 }
 
 /**
- * JSON形式でAPIレスポンスを取得
+ * JSON形式でAPIレスポンスを取得（キャッシュ機能付き）
  */
 export async function apiRequest<T = any>(
   url: string,
   options: RequestInit = {},
-  token?: string
+  token?: string,
+  cacheOptions?: {
+    useCache?: boolean;
+    cacheKey?: string;
+    cacheTTL?: number;
+  }
 ): Promise<T> {
+  const {
+    useCache = false,
+    cacheKey,
+    cacheTTL = 5 * 60 * 1000,
+  } = cacheOptions || {};
+
+  // GETリクエストでキャッシュが有効な場合、キャッシュをチェック
+  if (useCache && (!options.method || options.method === 'GET') && cacheKey) {
+    const cached = cache.get<T>(cacheKey);
+    if (cached !== null) {
+      return cached;
+    }
+  }
+
   const response = await authenticatedFetch(url, options, token);
-  return response.json();
+  const data = await response.json();
+
+  // GETリクエストでキャッシュが有効な場合、レスポンスをキャッシュ
+  if (useCache && (!options.method || options.method === 'GET') && cacheKey) {
+    cache.set(cacheKey, data, { ttl: cacheTTL });
+  }
+
+  return data;
 }
 
 /**
- * GET リクエスト
+ * GET リクエスト（キャッシュ機能付き）
  */
-export async function apiGet<T = any>(url: string, token?: string): Promise<T> {
-  return apiRequest<T>(url, { method: 'GET' }, token);
+export async function apiGet<T = any>(
+  url: string,
+  token?: string,
+  cacheOptions?: {
+    useCache?: boolean;
+    cacheKey?: string;
+    cacheTTL?: number;
+  }
+): Promise<T> {
+  return apiRequest<T>(url, { method: 'GET' }, token, cacheOptions);
 }
 
 /**

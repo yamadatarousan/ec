@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt, { SignOptions } from 'jsonwebtoken';
+import { NextRequest } from 'next/server';
 import { JWTPayload, AuthUser } from '@/types/auth';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
@@ -108,4 +109,12 @@ export function validatePassword(password: string): {
 export function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
+}
+
+/**
+ * NextRequestからJWTトークンを取得
+ */
+export function getTokenFromRequest(request: NextRequest): string | null {
+  const authHeader = request.headers.get('authorization');
+  return extractTokenFromHeader(authHeader);
 }

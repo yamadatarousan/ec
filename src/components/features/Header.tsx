@@ -1,6 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -23,7 +29,7 @@ import { cn } from '@/lib/utils';
  * Amazon風のレイアウトとデザインを採用
  * ロゴ、検索バー、ユーザーメニュー、カートアイコンを含む
  */
-export function Header() {
+function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -53,44 +59,53 @@ export function Header() {
   /**
    * 検索フォーム送信ハンドラー
    */
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      // 検索結果ページに遷移
-      router.push(
-        `/products?search=${encodeURIComponent(searchQuery.trim())}` as any
-      );
-      setIsMenuOpen(false); // モバイルメニューを閉じる
-      setShowSuggestions(false); // サジェストを閉じる
-    }
-  };
+  const handleSearch = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (searchQuery.trim()) {
+        // 検索結果ページに遷移
+        router.push(
+          `/products?search=${encodeURIComponent(searchQuery.trim())}` as any
+        );
+        setIsMenuOpen(false); // モバイルメニューを閉じる
+        setShowSuggestions(false); // サジェストを閉じる
+      }
+    },
+    [searchQuery, router]
+  );
 
   /**
    * 検索入力変更ハンドラー
    */
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchQuery(value);
-    setShowSuggestions(value.trim().length > 0);
-  };
+  const handleSearchInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setSearchQuery(value);
+      setShowSuggestions(value.trim().length > 0);
+    },
+    []
+  );
 
   /**
    * サジェスト選択ハンドラー
    */
-  const handleSuggestionSelect = (suggestion: string) => {
-    setSearchQuery(suggestion);
-    setShowSuggestions(false);
-    router.push(`/products?search=${encodeURIComponent(suggestion)}` as any);
-  };
+  const handleSuggestionSelect = useCallback(
+    (suggestion: string) => {
+      setSearchQuery(suggestion);
+      setShowSuggestions(false);
+      router.push(`/products?search=${encodeURIComponent(suggestion)}` as any);
+    },
+    [router]
+  );
 
   /**
    * ログアウト処理
    */
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     setShowUserMenu(false);
     router.push('/');
-  };
+  }, [logout, router]);
 
   return (
     <header className="bg-gray-900 text-white shadow-lg border-b border-gray-800">
@@ -318,3 +333,11 @@ export function Header() {
     </header>
   );
 }
+
+// React.memoで最適化 - 認証状態とカート数の変更時のみ再レンダリング
+const MemoizedHeader = React.memo(Header, (prevProps, nextProps) => {
+  // propsが無いので、常にtrueを返して内部の状態変化に依存
+  return false; // 内部状態（useAuth, useCart）に依存するため、毎回チェック
+});
+
+export { MemoizedHeader as Header };

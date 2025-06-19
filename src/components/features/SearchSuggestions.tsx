@@ -1,6 +1,12 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import Link from 'next/link';
 import { Search, Clock, TrendingUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -18,7 +24,7 @@ interface SearchSuggestion {
   type: 'product' | 'category' | 'recent' | 'trending';
 }
 
-export function SearchSuggestions({
+function SearchSuggestions({
   query,
   isVisible,
   onClose,
@@ -28,36 +34,40 @@ export function SearchSuggestions({
   const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Mock候補をメモ化
+  const mockSuggestions = useMemo(() => {
+    if (!query.trim() || query.length < 2) return [];
+
+    return [
+      { id: '1', name: `${query} MacBook`, type: 'product' as const },
+      { id: '2', name: `${query} iPhone`, type: 'product' as const },
+      { id: '3', name: `${query}関連商品`, type: 'category' as const },
+      { id: '4', name: query, type: 'recent' as const },
+    ].filter(s => s.name.toLowerCase().includes(query.toLowerCase()));
+  }, [query]);
+
   // 検索候補を取得
+  const fetchSuggestions = useCallback(async () => {
+    setLoading(true);
+    try {
+      setSuggestions(mockSuggestions);
+    } catch (error) {
+      console.error('検索候補取得エラー:', error);
+      setSuggestions([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [mockSuggestions]);
+
   useEffect(() => {
     if (!query.trim() || query.length < 2) {
       setSuggestions([]);
       return;
     }
 
-    const fetchSuggestions = async () => {
-      setLoading(true);
-      try {
-        // 簡易的な候補生成（実際のAPIでは検索候補エンドポイントを使用）
-        const mockSuggestions: SearchSuggestion[] = [
-          { id: '1', name: `${query} MacBook`, type: 'product' as const },
-          { id: '2', name: `${query} iPhone`, type: 'product' as const },
-          { id: '3', name: `${query}関連商品`, type: 'category' as const },
-          { id: '4', name: query, type: 'recent' as const },
-        ].filter(s => s.name.toLowerCase().includes(query.toLowerCase()));
-
-        setSuggestions(mockSuggestions);
-      } catch (error) {
-        console.error('検索候補取得エラー:', error);
-        setSuggestions([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     const timeoutId = setTimeout(fetchSuggestions, 200);
     return () => clearTimeout(timeoutId);
-  }, [query]);
+  }, [query, fetchSuggestions]);
 
   // 外側クリックで閉じる
   useEffect(() => {
@@ -139,3 +149,16 @@ export function SearchSuggestions({
     </div>
   );
 }
+
+// React.memoで最適化 - クエリとvisibilityの変更時のみ再レンダリング
+const MemoizedSearchSuggestions = React.memo(
+  SearchSuggestions,
+  (prevProps, nextProps) => {
+    return (
+      prevProps.query === nextProps.query &&
+      prevProps.isVisible === nextProps.isVisible
+    );
+  }
+);
+
+export { MemoizedSearchSuggestions as SearchSuggestions };

@@ -8,6 +8,9 @@ import {
   ReactNode,
 } from 'react';
 import { useAuth } from './AuthContext';
+import { useToast, useErrorHandler } from '@/components/ui';
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api-client';
+import { cache } from '@/lib/cache';
 
 interface CartItem {
   id: string;
@@ -27,6 +30,7 @@ interface CartState {
   itemCount: number;
   total: number;
   isLoading: boolean;
+  error: string | null;
 }
 
 type CartAction =
@@ -36,6 +40,7 @@ type CartAction =
   | { type: 'UPDATE_ITEM'; payload: { productId: string; quantity: number } }
   | { type: 'REMOVE_ITEM'; payload: string }
   | { type: 'SET_ITEM_COUNT'; payload: number }
+  | { type: 'SET_ERROR'; payload: string | null }
   | { type: 'CLEAR_CART' };
 
 const initialState: CartState = {
@@ -43,6 +48,7 @@ const initialState: CartState = {
   itemCount: 0,
   total: 0,
   isLoading: false,
+  error: null,
 };
 
 function cartReducer(state: CartState, action: CartAction): CartState {
@@ -131,6 +137,9 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     case 'SET_ITEM_COUNT':
       return { ...state, itemCount: action.payload };
 
+    case 'SET_ERROR':
+      return { ...state, error: action.payload, isLoading: false };
+
     case 'CLEAR_CART':
       return { ...state, items: [], itemCount: 0, total: 0 };
 
@@ -152,6 +161,8 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initialState);
   const { token, isAuthenticated } = useAuth();
+  const { showError } = useToast();
+  const { handleError } = useErrorHandler();
 
   // 認証ヘッダーを取得するヘルパー
   const getAuthHeaders = () => {
@@ -167,10 +178,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // カート情報を取得
   const refreshCart = async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
+
     try {
       const response = await fetch('/api/cart', {
         headers: getAuthHeaders(),
       });
+
       if (response.ok) {
         const data = await response.json();
         dispatch({
@@ -191,16 +205,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
             itemCount: data.itemCount,
           },
         });
+      } else {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: 'カート情報の取得に失敗しました' }));
+        const errorMessage =
+          errorData.error || 'カート情報の取得に失敗しました';
+        dispatch({ type: 'SET_ERROR', payload: errorMessage });
       }
     } catch (error) {
       console.error('カート取得エラー:', error);
-      dispatch({ type: 'SET_LOADING', payload: false });
+      const errorMessage = 'ネットワークエラーが発生しました';
+      dispatch({ type: 'SET_ERROR', payload: errorMessage });
     }
   };
 
   // カートにアイテム追加
   const addToCart = async (productId: string, quantity: number = 1) => {
     dispatch({ type: 'SET_LOADING', payload: true });
+    dispatch({ type: 'SET_ERROR', payload: null });
+
     try {
       const response = await fetch('/api/cart', {
         method: 'POST',
@@ -212,10 +236,24 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
         dispatch({ type: 'SET_ITEM_COUNT', payload: data.itemCount });
         await refreshCart(); // カート全体を再取得
+      } else {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: 'カートへの追加に失敗しました' }));
+        const errorMessage = errorData.error || 'カートへの追加に失敗しました';
+        dispatch({ type: 'SET_ERROR', payload: errorMessage });
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error('カート追加エラー:', error);
-      dispatch({ type: 'SET_LOADING', payload: false });
+      if (error instanceof Error && error.message) {
+        dispatch({ type: 'SET_ERROR', payload: error.message });
+        throw error; // ProductCardで適切にエラーハンドリングできるよう再throw
+      } else {
+        const errorMessage = 'ネットワークエラーが発生しました';
+        dispatch({ type: 'SET_ERROR', payload: errorMessage });
+        throw new Error(errorMessage);
+      }
     }
   };
 
