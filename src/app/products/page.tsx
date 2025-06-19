@@ -43,6 +43,14 @@ export default async function ProductsPage({
     getCategories(),
   ]);
 
+  // Decimal型をnumberに変換
+  const serializedProducts = productsResult.products.map(product => ({
+    ...product,
+    price: Number(product.price),
+    comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
+    weight: product.weight ? Number(product.weight) : null,
+  }));
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container-custom py-6">
@@ -55,7 +63,7 @@ export default async function ProductsPage({
 
         <Suspense fallback={<div>読み込み中...</div>}>
           <ProductsClient
-            initialProducts={productsResult.products}
+            initialProducts={serializedProducts}
             categories={categories}
             pagination={productsResult.pagination}
             initialFilters={filters}

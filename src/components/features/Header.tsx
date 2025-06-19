@@ -1,9 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { Search, ShoppingCart, User, Menu, Heart } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import {
+  Search,
+  ShoppingCart,
+  User,
+  Menu,
+  Heart,
+  LogOut,
+  LogIn,
+} from 'lucide-react';
 import { Button, Input } from '@/components/ui';
+import { SearchSuggestions } from './SearchSuggestions';
+import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 
 /**
@@ -14,6 +26,29 @@ import { cn } from '@/lib/utils';
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const router = useRouter();
+  const { itemCount } = useCart();
+  const { user, isAuthenticated, logout } = useAuth();
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // ユーザーメニューの外部クリックで閉じる
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setShowUserMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   /**
    * 検索フォーム送信ハンドラー
@@ -21,9 +56,40 @@ export function Header() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // TODO: 検索ページに遷移する処理を実装
-      console.log('検索:', searchQuery);
+      // 検索結果ページに遷移
+      router.push(
+        `/products?search=${encodeURIComponent(searchQuery.trim())}` as any
+      );
+      setIsMenuOpen(false); // モバイルメニューを閉じる
+      setShowSuggestions(false); // サジェストを閉じる
     }
+  };
+
+  /**
+   * 検索入力変更ハンドラー
+   */
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    setShowSuggestions(value.trim().length > 0);
+  };
+
+  /**
+   * サジェスト選択ハンドラー
+   */
+  const handleSuggestionSelect = (suggestion: string) => {
+    setSearchQuery(suggestion);
+    setShowSuggestions(false);
+    router.push(`/products?search=${encodeURIComponent(suggestion)}` as any);
+  };
+
+  /**
+   * ログアウト処理
+   */
+  const handleLogout = () => {
+    logout();
+    setShowUserMenu(false);
+    router.push('/');
   };
 
   return (
@@ -53,18 +119,25 @@ export function Header() {
           </div>
 
           {/* 検索バー */}
-          <div className="hidden md:flex flex-1 max-w-xl mx-6">
+          <div className="hidden md:flex flex-1 max-w-xl mx-6 relative">
             <form
               onSubmit={handleSearch}
               className="w-full flex rounded-md overflow-hidden shadow-sm"
             >
-              <div className="flex-1">
+              <div className="flex-1 relative">
                 <Input
                   type="search"
                   placeholder="商品を検索..."
                   value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
+                  onChange={handleSearchInputChange}
+                  onFocus={() => searchQuery.trim() && setShowSuggestions(true)}
                   className="rounded-r-none border-r-0 focus:ring-0 focus:border-gray-300 h-9"
+                />
+                <SearchSuggestions
+                  query={searchQuery}
+                  isVisible={showSuggestions}
+                  onClose={() => setShowSuggestions(false)}
+                  onSelect={handleSuggestionSelect}
                 />
               </div>
               <button
@@ -80,7 +153,7 @@ export function Header() {
           <div className="flex items-center space-x-3">
             {/* お気に入り */}
             <Link
-              href={'#' as any}
+              href="/favorites"
               className="hidden sm:flex items-center space-x-1 hover:text-yellow-400 transition-colors px-2 py-1 rounded"
             >
               <Heart className="h-4 w-4" />
@@ -88,42 +161,100 @@ export function Header() {
             </Link>
 
             {/* ユーザーアカウント */}
-            <Link
-              href={'#' as any}
-              className="flex items-center space-x-1 hover:text-yellow-400 transition-colors px-2 py-1 rounded"
-            >
-              <User className="h-4 w-4" />
-              <span className="hidden sm:block text-sm">アカウント</span>
-            </Link>
+            {isAuthenticated ? (
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-1 hover:text-yellow-400 transition-colors px-2 py-1 rounded"
+                >
+                  <User className="h-4 w-4" />
+                  <span className="hidden sm:block text-sm">
+                    {user?.name || 'アカウント'}
+                  </span>
+                </button>
+
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                    <div className="py-1">
+                      <div className="px-4 py-2 border-b border-gray-200">
+                        <p className="text-sm font-medium text-gray-900">
+                          {user?.name || 'ユーザー'}
+                        </p>
+                        <p className="text-xs text-gray-500">{user?.email}</p>
+                      </div>
+                      <Link
+                        href="/account"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        <User className="inline h-4 w-4 mr-2" />
+                        マイアカウント
+                      </Link>
+                      <Link
+                        href="/orders"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        📦 注文履歴
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      >
+                        <LogOut className="inline h-4 w-4 mr-2" />
+                        ログアウト
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="flex items-center space-x-1 hover:text-yellow-400 transition-colors px-2 py-1 rounded"
+              >
+                <LogIn className="h-4 w-4" />
+                <span className="hidden sm:block text-sm">ログイン</span>
+              </Link>
+            )}
 
             {/* ショッピングカート */}
             <Link
-              href={'#' as any}
+              href="/cart"
               className="flex items-center space-x-1 hover:text-yellow-400 transition-colors px-2 py-1 rounded relative"
             >
               <ShoppingCart className="h-4 w-4" />
               <span className="hidden sm:block text-sm">カート</span>
-              {/* カート内アイテム数バッジ（仮） */}
-              <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                0
-              </span>
+              {/* カート内アイテム数バッジ */}
+              {itemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center min-w-[1rem]">
+                  {itemCount > 99 ? '99+' : itemCount}
+                </span>
+              )}
             </Link>
           </div>
         </div>
 
         {/* モバイル検索バー */}
-        <div className="md:hidden pb-3">
+        <div className="md:hidden pb-3 relative">
           <form
             onSubmit={handleSearch}
             className="flex rounded-md overflow-hidden shadow-sm"
           >
-            <div className="flex-1">
+            <div className="flex-1 relative">
               <Input
                 type="search"
                 placeholder="商品を検索..."
                 value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
+                onChange={handleSearchInputChange}
+                onFocus={() => searchQuery.trim() && setShowSuggestions(true)}
                 className="rounded-r-none border-r-0 h-9"
+              />
+              <SearchSuggestions
+                query={searchQuery}
+                isVisible={showSuggestions}
+                onClose={() => setShowSuggestions(false)}
+                onSelect={handleSuggestionSelect}
               />
             </div>
             <button

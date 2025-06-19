@@ -12,18 +12,20 @@ import {
 } from 'lucide-react';
 import { Button, Badge, Card, CardContent } from '@/components/ui';
 import { formatPrice, cn } from '@/lib/utils';
-import { Decimal } from '@prisma/client/runtime/library';
+import { useCart } from '@/contexts/CartContext';
+import { ProductCard } from '@/components/features/ProductCard';
+import { ProductStatus } from '@/types/product';
 
 interface ProductDetailClientProps {
   product: {
     id: string;
     name: string;
     description: string;
-    price: Decimal;
-    comparePrice?: Decimal | null;
+    price: number;
+    comparePrice?: number | null;
     sku: string;
     stock: number;
-    weight?: Decimal | null;
+    weight?: number | null;
     dimensions?: string | null;
     category: {
       id: string;
@@ -53,8 +55,8 @@ interface ProductDetailClientProps {
     id: string;
     name: string;
     description: string;
-    price: Decimal;
-    comparePrice?: Decimal | null;
+    price: number;
+    comparePrice?: number | null;
     category: {
       name: string;
     };
@@ -76,12 +78,11 @@ export function ProductDetailClient({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorited, setIsFavorited] = useState(false);
+  const { addToCart, isLoading } = useCart();
 
   const primaryImage = product.images[selectedImageIndex] || product.images[0];
-  const price = Number(product.price);
-  const comparePrice = product.comparePrice
-    ? Number(product.comparePrice)
-    : null;
+  const price = product.price;
+  const comparePrice = product.comparePrice;
   const hasDiscount = comparePrice && comparePrice > price;
   const discountPercentage = hasDiscount
     ? Math.round(((comparePrice! - price) / comparePrice!) * 100)
@@ -107,9 +108,12 @@ export function ProductDetailClient({
   /**
    * カートに追加処理
    */
-  const handleAddToCart = () => {
-    // TODO: カートAPI呼び出し
-    console.log('カートに追加:', product.id, 'quantity:', quantity);
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(product.id, quantity);
+    } catch (error) {
+      console.error('カートに追加できませんでした:', error);
+    }
   };
 
   /**
@@ -287,17 +291,21 @@ export function ProductDetailClient({
               <div className="space-y-3">
                 <button
                   onClick={handleAddToCart}
-                  disabled={product.stock === 0}
+                  disabled={product.stock === 0 || isLoading}
                   className={cn(
                     'w-full py-3 px-6 rounded-md font-medium transition-colors flex items-center justify-center space-x-2',
-                    product.stock === 0
+                    product.stock === 0 || isLoading
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-yellow-400 hover:bg-yellow-500 text-gray-900'
                   )}
                 >
                   <ShoppingCart className="h-5 w-5" />
                   <span>
-                    {product.stock === 0 ? '在庫切れ' : 'カートに追加'}
+                    {product.stock === 0
+                      ? '在庫切れ'
+                      : isLoading
+                        ? '追加中...'
+                        : 'カートに追加'}
                   </span>
                 </button>
 
@@ -352,7 +360,7 @@ export function ProductDetailClient({
               {product.weight && (
                 <div className="flex justify-between">
                   <dt className="text-gray-600">重量:</dt>
-                  <dd className="font-medium">{Number(product.weight)}kg</dd>
+                  <dd className="font-medium">{product.weight}kg</dd>
                 </div>
               )}
               {product.dimensions && (
@@ -390,6 +398,175 @@ export function ProductDetailClient({
           </CardContent>
         </Card>
       </div>
+
+      {/* レビューセクション */}
+      {product.reviews.length > 0 && (
+        <div className="mt-16">
+          <div className="border-t border-gray-200 pt-16">
+            <h2 className="text-2xl font-bold text-gray-900 mb-8">
+              カスタマーレビュー
+            </h2>
+
+            {/* レビュー統計 */}
+            <div className="grid md:grid-cols-2 gap-8 mb-8">
+              <div className="bg-gray-50 p-6 rounded-lg">
+                <div className="flex items-center space-x-4 mb-4">
+                  <div className="text-4xl font-bold text-gray-900">
+                    {(
+                      product.reviews.reduce(
+                        (sum, review) => sum + review.rating,
+                        0
+                      ) / product.reviews.length
+                    ).toFixed(1)}
+                  </div>
+                  <div>
+                    <div className="flex items-center space-x-1 mb-1">
+                      {renderStars(
+                        product.reviews.reduce(
+                          (sum, review) => sum + review.rating,
+                          0
+                        ) / product.reviews.length
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {product._count.reviews}件のレビュー
+                    </div>
+                  </div>
+                </div>
+
+                {/* 評価分布 */}
+                <div className="space-y-2">
+                  {[5, 4, 3, 2, 1].map(rating => {
+                    const count = product.reviews.filter(
+                      review => review.rating === rating
+                    ).length;
+                    const percentage = (count / product.reviews.length) * 100;
+
+                    return (
+                      <div key={rating} className="flex items-center space-x-3">
+                        <span className="text-sm w-4">{rating}</span>
+                        <Star className="h-4 w-4 text-yellow-400 fill-yellow-400" />
+                        <div className="flex-1 bg-gray-200 rounded-full h-2">
+                          <div
+                            className="bg-yellow-400 h-2 rounded-full"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                        <span className="text-sm text-gray-600 w-8">
+                          {count}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-center">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3">
+                  レビューを書く
+                </Button>
+              </div>
+            </div>
+
+            {/* レビュー一覧 */}
+            <div className="space-y-6">
+              {product.reviews.slice(0, 3).map(review => (
+                <Card key={review.id} className="border-gray-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-medium text-gray-600">
+                            {review.user.name?.[0] || 'U'}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {review.user.name || '匿名ユーザー'}
+                          </div>
+                          <div className="flex items-center space-x-1">
+                            {renderStars(review.rating)}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {review.title && (
+                      <h4 className="font-medium text-gray-900 mb-2">
+                        {review.title}
+                      </h4>
+                    )}
+
+                    <p className="text-gray-700 leading-relaxed">
+                      {review.comment}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {product.reviews.length > 3 && (
+                <div className="text-center">
+                  <Button
+                    variant="ghost"
+                    className="text-blue-600 hover:text-blue-700"
+                  >
+                    すべてのレビューを見る ({product._count.reviews}件)
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 関連商品 */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">関連商品</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {relatedProducts.map(relatedProduct => (
+              <ProductCard
+                key={relatedProduct.id}
+                product={{
+                  id: relatedProduct.id,
+                  name: relatedProduct.name,
+                  description: relatedProduct.description,
+                  price: relatedProduct.price,
+                  comparePrice: relatedProduct.comparePrice,
+                  stock: 10, // 仮の在庫数
+                  sku: `SKU-${relatedProduct.id}`,
+                  averageRating: 4.5,
+                  reviewCount: 25,
+                  status: ProductStatus.ACTIVE,
+                  weight: null,
+                  dimensions: null,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  categoryId: 'category-' + relatedProduct.id,
+                  category: {
+                    id: 'category-' + relatedProduct.id,
+                    name: relatedProduct.category.name,
+                    slug: relatedProduct.category.name.toLowerCase(),
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                  },
+                  images: relatedProduct.images.map((img, index) => ({
+                    id: `${relatedProduct.id}-${index}`,
+                    url: img.url,
+                    alt: img.alt,
+                    order: index,
+                    createdAt: new Date(),
+                    productId: relatedProduct.id,
+                  })),
+                  reviews: [],
+                }}
+                variant="compact"
+                showQuickActions={true}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

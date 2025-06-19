@@ -33,7 +33,9 @@
   "homepage": "https://github.com/yamadatarousan/ec#readme",
   "dependencies": {
     "@prisma/client": "^6.10.0",
+    "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.517.0",
     "next": "^15.3.3",
     "prisma": "^6.10.0",
@@ -42,6 +44,8 @@
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.0.3",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",

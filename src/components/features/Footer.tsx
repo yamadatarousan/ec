@@ -33,7 +33,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
-                  href={'#' as any}
+                  href="/about"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   会社概要
@@ -41,7 +41,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href={'#' as any}
+                  href="/contact"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   お問い合わせ
@@ -88,7 +88,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href={'#' as any}
+                  href="/favorites"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   お気に入り
@@ -119,7 +119,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href={'#' as any}
+                  href="/privacy"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   プライバシーポリシー
@@ -127,7 +127,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href={'#' as any}
+                  href="/terms"
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   利用規約

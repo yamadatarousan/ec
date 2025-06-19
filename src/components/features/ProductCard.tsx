@@ -7,6 +7,7 @@ import { Star, Heart, ShoppingCart } from 'lucide-react';
 import { Card, CardContent, Button, Badge } from '@/components/ui';
 import { Product } from '@/types';
 import { formatPrice, cn } from '@/lib/utils';
+import { useCart } from '@/contexts/CartContext';
 
 interface ProductCardProps {
   product: Product;
@@ -26,6 +27,7 @@ export function ProductCard({
 }: ProductCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const { addToCart, isLoading } = useCart();
 
   const primaryImage =
     product.images.find(img => img.order === 0) || product.images[0];
@@ -50,11 +52,14 @@ export function ProductCard({
   /**
    * カートに追加処理
    */
-  const handleAddToCart = (e: React.MouseEvent) => {
+  const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // TODO: カートAPI呼び出し
-    console.log('カートに追加:', product.id);
+    try {
+      await addToCart(product.id, 1);
+    } catch (error) {
+      console.error('カートに追加できませんでした:', error);
+    }
   };
 
   /**
@@ -211,12 +216,16 @@ export function ProductCard({
             <div className="pt-2">
               <Button
                 onClick={handleAddToCart}
-                disabled={product.stock === 0}
+                disabled={product.stock === 0 || isLoading}
                 className="w-full"
                 size="sm"
               >
                 <ShoppingCart className="h-4 w-4 mr-2" />
-                {product.stock === 0 ? '在庫切れ' : 'カートに追加'}
+                {product.stock === 0
+                  ? '在庫切れ'
+                  : isLoading
+                    ? '追加中...'
+                    : 'カートに追加'}
               </Button>
             </div>
           )}

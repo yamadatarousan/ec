@@ -6,14 +6,13 @@ import { Grid, List, Filter, SortAsc, ChevronDown } from 'lucide-react';
 import { Button, Card, CardContent, Input, Badge } from '@/components/ui';
 import { ProductCard } from '@/components/features/ProductCard';
 import { cn } from '@/lib/utils';
-import { Decimal } from '@prisma/client/runtime/library';
 
 interface Product {
   id: string;
   name: string;
   description: string;
-  price: Decimal;
-  comparePrice?: Decimal | null;
+  price: number;
+  comparePrice?: number | null;
   sku: string;
   stock: number;
   category: {
@@ -322,10 +321,8 @@ export function ProductsClient({
                 id: product.id,
                 name: product.name,
                 description: product.description,
-                price: Number(product.price),
-                comparePrice: product.comparePrice
-                  ? Number(product.comparePrice)
-                  : undefined,
+                price: product.price,
+                comparePrice: product.comparePrice,
                 sku: product.sku,
                 stock: product.stock,
                 status: 'ACTIVE' as any,

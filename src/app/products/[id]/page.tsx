@@ -25,8 +25,25 @@ export default async function ProductDetailPage({
     notFound();
   }
 
+  // Decimal型をnumberに変換してクライアントコンポーネントに渡す
+  const serializedProduct = {
+    ...product,
+    price: Number(product.price),
+    comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
+    weight: product.weight ? Number(product.weight) : null,
+  };
+
+  const serializedRelatedProducts = relatedProducts.map(p => ({
+    ...p,
+    price: Number(p.price),
+    comparePrice: p.comparePrice ? Number(p.comparePrice) : null,
+  }));
+
   return (
-    <ProductDetailClient product={product} relatedProducts={relatedProducts} />
+    <ProductDetailClient
+      product={serializedProduct}
+      relatedProducts={serializedRelatedProducts}
+    />
   );
 }
 

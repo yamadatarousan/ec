@@ -13,7 +13,17 @@
       "Bash(rg:*)",
       "Bash(pkill:*)",
       "Bash(npm run:*)",
-      "Bash(createdb:*)"
+      "Bash(createdb:*)",
+      "Bash(find:*)",
+      "Bash(curl:*)",
+      "Bash(npx prisma:*)",
+      "Bash(pg_isready:*)",
+      "Bash(lsof:*)",
+      "Bash(node:*)",
+      "Bash(cat:*)",
+      "Bash(rm:*)",
+      "Bash(npx tsc:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }
