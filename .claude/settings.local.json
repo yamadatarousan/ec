@@ -24,7 +24,8 @@
       "Bash(rm:*)",
       "Bash(npx tsc:*)",
       "Bash(mkdir:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git pull:*)"
     ],
     "deny": []
   }
