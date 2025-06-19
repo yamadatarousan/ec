@@ -212,6 +212,13 @@ function Header() {
                       >
                         📦 注文履歴
                       </Link>
+                      <Link
+                        href="/wishlist"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => setShowUserMenu(false)}
+                      >
+                        ❤️ ウィッシュリスト
+                      </Link>
                       <button
                         onClick={handleLogout}
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"

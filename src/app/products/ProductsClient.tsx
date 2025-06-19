@@ -1,10 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Grid, List, Filter, SortAsc, ChevronDown } from 'lucide-react';
 import { Button, Card, CardContent, Input, Badge } from '@/components/ui';
 import { ProductCard } from '@/components/features/ProductCard';
+import { ProductFilters } from '@/components/features/ProductFilters';
+import { ProductSort } from '@/components/features/ProductSort';
 import { cn } from '@/lib/utils';
 
 interface Product {
@@ -46,15 +48,28 @@ interface Pagination {
   pages: number;
 }
 
+interface FilterState {
+  categories: string[];
+  minPrice?: number;
+  maxPrice?: number;
+  minRating?: number;
+  inStock: boolean;
+  onSale: boolean;
+}
+
 interface ProductsClientProps {
   initialProducts: Product[];
   categories: Category[];
   pagination: Pagination;
   initialFilters: {
     category?: string;
+    categories?: string[];
     search?: string;
     minPrice?: number;
     maxPrice?: number;
+    minRating?: number;
+    inStock?: boolean;
+    onSale?: boolean;
   };
   initialSort: {
     field: string;
@@ -74,308 +89,287 @@ export function ProductsClient({
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
-  const [products] = useState(initialProducts);
+  const [products, setProducts] = useState(initialProducts);
+  const [loading, setLoading] = useState(false);
 
-  const [localFilters, setLocalFilters] = useState({
-    category: initialFilters.category || '',
-    search: initialFilters.search || '',
-    minPrice: initialFilters.minPrice?.toString() || '',
-    maxPrice: initialFilters.maxPrice?.toString() || '',
+  const [filters, setFilters] = useState<FilterState>({
+    categories:
+      initialFilters.categories ||
+      (initialFilters.category ? [initialFilters.category] : []),
+    minPrice: initialFilters.minPrice,
+    maxPrice: initialFilters.maxPrice,
+    minRating: initialFilters.minRating,
+    inStock: initialFilters.inStock || false,
+    onSale: initialFilters.onSale || false,
   });
 
-  const [sortBy, setSortBy] = useState(initialSort.field);
-  const [sortOrder, setSortOrder] = useState(initialSort.direction);
+  const [searchQuery, setSearchQuery] = useState(initialFilters.search || '');
+  const [currentSort, setCurrentSort] = useState({
+    field: initialSort.field,
+    direction: initialSort.direction,
+  });
+
+  // 商品データを取得
+  const fetchProducts = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+
+      if (searchQuery) params.set('search', searchQuery);
+      if (filters.categories.length > 0)
+        params.set('categories', filters.categories.join(','));
+      if (filters.minPrice !== undefined)
+        params.set('minPrice', filters.minPrice.toString());
+      if (filters.maxPrice !== undefined)
+        params.set('maxPrice', filters.maxPrice.toString());
+      if (filters.minRating !== undefined)
+        params.set('minRating', filters.minRating.toString());
+      if (filters.inStock) params.set('inStock', 'true');
+      if (filters.onSale) params.set('onSale', 'true');
+      params.set('sortBy', currentSort.field);
+      params.set('sortOrder', currentSort.direction);
+
+      const response = await fetch(`/api/products?${params.toString()}`);
+      const data = await response.json();
+
+      if (data.products) {
+        setProducts(data.products);
+      }
+    } catch (error) {
+      console.error('Failed to fetch products:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, filters, currentSort]);
 
   // URLパラメータを更新
-  const updateURL = () => {
+  const updateURL = useCallback(() => {
     const params = new URLSearchParams();
 
-    if (localFilters.category) params.set('category', localFilters.category);
-    if (localFilters.search) params.set('search', localFilters.search);
-    if (localFilters.minPrice) params.set('minPrice', localFilters.minPrice);
-    if (localFilters.maxPrice) params.set('maxPrice', localFilters.maxPrice);
-    if (sortBy !== 'createdAt') params.set('sortBy', sortBy);
-    if (sortOrder !== 'desc') params.set('sortOrder', sortOrder);
+    if (searchQuery) params.set('search', searchQuery);
+    if (filters.categories.length > 0)
+      params.set('categories', filters.categories.join(','));
+    if (filters.minPrice !== undefined)
+      params.set('minPrice', filters.minPrice.toString());
+    if (filters.maxPrice !== undefined)
+      params.set('maxPrice', filters.maxPrice.toString());
+    if (filters.minRating !== undefined)
+      params.set('minRating', filters.minRating.toString());
+    if (filters.inStock) params.set('inStock', 'true');
+    if (filters.onSale) params.set('onSale', 'true');
+    if (currentSort.field !== 'createdAt')
+      params.set('sortBy', currentSort.field);
+    if (currentSort.direction !== 'desc')
+      params.set('sortOrder', currentSort.direction);
 
     const newURL = `/products${params.toString() ? `?${params.toString()}` : ''}`;
     router.push(newURL as any);
-  };
+  }, [router, searchQuery, filters, currentSort]);
 
-  // フィルターをクリア
-  const clearFilters = () => {
-    setLocalFilters({
-      category: '',
-      search: '',
-      minPrice: '',
-      maxPrice: '',
-    });
-    router.push('/products' as any);
-  };
+  // フィルター変更ハンドラー
+  const handleFiltersChange = useCallback((newFilters: FilterState) => {
+    setFilters(newFilters);
+  }, []);
+
+  // ソート変更ハンドラー
+  const handleSortChange = useCallback((field: string, direction: string) => {
+    setCurrentSort({ field, direction });
+  }, []);
+
+  // 検索実行
+  const handleSearch = useCallback(() => {
+    fetchProducts();
+    updateURL();
+  }, [fetchProducts, updateURL]);
 
   // アクティブなフィルターの数を計算
-  const activeFiltersCount = Object.values(localFilters).filter(Boolean).length;
+  const activeFiltersCount =
+    filters.categories.length +
+    (filters.minPrice !== undefined ? 1 : 0) +
+    (filters.maxPrice !== undefined ? 1 : 0) +
+    (filters.minRating !== undefined ? 1 : 0) +
+    (filters.inStock ? 1 : 0) +
+    (filters.onSale ? 1 : 0) +
+    (searchQuery ? 1 : 0);
+
+  // フィルターまたはソートが変更されたら商品を取得
+  useEffect(() => {
+    fetchProducts();
+  }, [filters, currentSort]);
+
+  // URLが変更されたら更新
+  useEffect(() => {
+    updateURL();
+  }, [searchQuery, filters, currentSort]);
 
   return (
-    <div className="flex gap-6">
-      {/* サイドバー（フィルター） */}
-      <div
-        className={cn(
-          'w-80 space-y-6',
-          showFilters ? 'block' : 'hidden lg:block'
-        )}
-      >
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">フィルター</h3>
-              {activeFiltersCount > 0 && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="text-blue-600 hover:text-blue-800"
-                >
-                  クリア ({activeFiltersCount})
-                </Button>
-              )}
-            </div>
-
-            <div className="space-y-6">
-              {/* 検索 */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  キーワード検索
-                </label>
-                <Input
-                  type="text"
-                  placeholder="商品名で検索"
-                  value={localFilters.search}
-                  onChange={e =>
-                    setLocalFilters(prev => ({
-                      ...prev,
-                      search: e.target.value,
-                    }))
-                  }
-                  onKeyDown={e => e.key === 'Enter' && updateURL()}
-                />
-              </div>
-
-              {/* カテゴリー */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  カテゴリー
-                </label>
-                <div className="space-y-2">
-                  <button
-                    onClick={() => {
-                      setLocalFilters(prev => ({ ...prev, category: '' }));
-                      router.push('/products' as any);
-                    }}
-                    className={cn(
-                      'w-full text-left px-3 py-2 rounded-md text-sm transition-colors',
-                      !localFilters.category
-                        ? 'bg-blue-100 text-blue-800'
-                        : 'hover:bg-gray-100'
-                    )}
-                  >
-                    すべて
-                  </button>
-                  {categories.map(category => (
-                    <button
-                      key={category.id}
-                      onClick={() => {
-                        setLocalFilters(prev => ({
-                          ...prev,
-                          category: category.slug,
-                        }));
-                        const params = new URLSearchParams(searchParams);
-                        params.set('category', category.slug);
-                        router.push(`/products?${params.toString()}` as any);
-                      }}
-                      className={cn(
-                        'w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex justify-between items-center',
-                        localFilters.category === category.slug
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'hover:bg-gray-100'
-                      )}
-                    >
-                      <span>{category.name}</span>
-                      <Badge variant="default" size="sm">
-                        {category._count.products}
-                      </Badge>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* 価格範囲 */}
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  価格範囲
-                </label>
-                <div className="flex gap-2">
-                  <Input
-                    type="number"
-                    placeholder="最低価格"
-                    value={localFilters.minPrice}
-                    onChange={e =>
-                      setLocalFilters(prev => ({
-                        ...prev,
-                        minPrice: e.target.value,
-                      }))
-                    }
-                  />
-                  <Input
-                    type="number"
-                    placeholder="最高価格"
-                    value={localFilters.maxPrice}
-                    onChange={e =>
-                      setLocalFilters(prev => ({
-                        ...prev,
-                        maxPrice: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-                <Button onClick={updateURL} className="w-full mt-2" size="sm">
-                  適用
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      {/* 検索バー */}
+      <div className="bg-white p-4 rounded-lg shadow-sm">
+        <div className="flex gap-2">
+          <Input
+            type="search"
+            placeholder="商品を検索..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSearch()}
+            className="flex-1"
+          />
+          <Button onClick={handleSearch} disabled={loading}>
+            検索
+          </Button>
+        </div>
       </div>
 
-      {/* メインコンテンツ */}
-      <div className="flex-1">
-        {/* ツールバー */}
-        <div className="flex items-center justify-between mb-6 bg-white p-4 rounded-lg shadow-sm">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowFilters(!showFilters)}
-              className="lg:hidden"
-            >
-              <Filter className="h-4 w-4 mr-2" />
-              フィルター
-              {activeFiltersCount > 0 && (
-                <Badge className="ml-2">{activeFiltersCount}</Badge>
-              )}
-            </Button>
-
-            <div className="hidden sm:flex items-center gap-2">
-              <span className="text-sm text-gray-600">表示:</span>
-              <Button
-                variant={viewMode === 'grid' ? 'primary' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'primary' : 'ghost'}
-                size="sm"
-                onClick={() => setViewMode('list')}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">並び順:</span>
-            <select
-              value={`${sortBy}-${sortOrder}`}
-              onChange={e => {
-                const [field, direction] = e.target.value.split('-');
-                setSortBy(field);
-                setSortOrder(direction);
-                const params = new URLSearchParams(searchParams);
-                params.set('sortBy', field);
-                params.set('sortOrder', direction);
-                router.push(`/products?${params.toString()}` as any);
-              }}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-            >
-              <option value="createdAt-desc">新着順</option>
-              <option value="price-asc">価格の安い順</option>
-              <option value="price-desc">価格の高い順</option>
-              <option value="name-asc">名前順</option>
-            </select>
-          </div>
-        </div>
-
-        {/* 商品一覧 */}
+      <div className="flex gap-6">
+        {/* サイドバー（フィルター） */}
         <div
           className={cn(
-            viewMode === 'grid'
-              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
-              : 'space-y-4'
+            'w-80 space-y-6',
+            showFilters ? 'block' : 'hidden lg:block'
           )}
         >
-          {products.map(product => (
-            <ProductCard
-              key={product.id}
-              product={{
-                id: product.id,
-                name: product.name,
-                description: product.description,
-                price: product.price,
-                comparePrice: product.comparePrice,
-                sku: product.sku,
-                stock: product.stock,
-                status: 'ACTIVE' as any,
-                categoryId: product.category.id,
-                category: {
-                  id: product.category.id,
-                  name: product.category.name,
-                  slug: product.category.slug,
-                  createdAt: new Date(),
-                  updatedAt: new Date(),
-                },
-                images: product.images.map(img => ({
-                  id: img.id,
-                  url: img.url,
-                  alt: img.alt || '',
-                  order: 0,
-                  createdAt: new Date(),
-                  productId: product.id,
-                })),
-                reviews: [],
-                createdAt: new Date(),
-                updatedAt: new Date(),
-                averageRating: 0,
-                reviewCount: product._count.reviews,
-              }}
-              variant={viewMode === 'grid' ? 'default' : 'compact'}
-            />
-          ))}
+          <ProductFilters
+            categories={categories}
+            filters={filters}
+            onFiltersChange={handleFiltersChange}
+          />
         </div>
 
-        {/* ページネーション */}
-        {pagination.pages > 1 && (
-          <div className="flex justify-center mt-8">
-            <div className="flex items-center gap-2">
-              {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(
-                page => (
-                  <Button
-                    key={page}
-                    variant={page === pagination.page ? 'primary' : 'ghost'}
-                    size="sm"
-                    onClick={() => {
-                      const params = new URLSearchParams(searchParams);
-                      params.set('page', page.toString());
-                      router.push(`/products?${params.toString()}` as any);
-                    }}
-                  >
-                    {page}
-                  </Button>
-                )
-              )}
+        {/* メインコンテンツ */}
+        <div className="flex-1">
+          {/* ツールバー */}
+          <div className="flex flex-col sm:flex-row gap-4 mb-6 bg-white p-4 rounded-lg shadow-sm">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFilters(!showFilters)}
+                className="lg:hidden"
+              >
+                <Filter className="h-4 w-4 mr-2" />
+                フィルター
+                {activeFiltersCount > 0 && (
+                  <Badge className="ml-2">{activeFiltersCount}</Badge>
+                )}
+              </Button>
+
+              <div className="hidden sm:flex items-center gap-2">
+                <span className="text-sm text-gray-600">表示:</span>
+                <Button
+                  variant={viewMode === 'grid' ? 'primary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                >
+                  <Grid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === 'list' ? 'primary' : 'ghost'}
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="text-sm text-gray-600">
+                {products.length}件の商品
+                {loading && (
+                  <span className="ml-2 text-blue-600">読み込み中...</span>
+                )}
+              </div>
             </div>
+
+            {/* ソートコンポーネント */}
+            <ProductSort
+              currentSort={currentSort}
+              onSortChange={handleSortChange}
+              className="sm:ml-auto"
+            />
           </div>
-        )}
+
+          {/* 商品一覧 */}
+          <div
+            className={cn(
+              loading && 'opacity-50 pointer-events-none',
+              viewMode === 'grid'
+                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+                : 'space-y-4'
+            )}
+          >
+            {products.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <div className="text-gray-500">
+                  {loading
+                    ? '商品を読み込み中...'
+                    : '条件に合う商品が見つかりませんでした'}
+                </div>
+              </div>
+            ) : (
+              products.map(product => (
+                <ProductCard
+                  key={product.id}
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    description: product.description,
+                    price: product.price,
+                    comparePrice: product.comparePrice,
+                    sku: product.sku,
+                    stock: product.stock,
+                    status: 'ACTIVE' as any,
+                    categoryId: product.category.id,
+                    category: {
+                      id: product.category.id,
+                      name: product.category.name,
+                      slug: product.category.slug,
+                      createdAt: new Date(),
+                      updatedAt: new Date(),
+                    },
+                    images: product.images.map(img => ({
+                      id: img.id,
+                      url: img.url,
+                      alt: img.alt || '',
+                      order: 0,
+                      createdAt: new Date(),
+                      productId: product.id,
+                    })),
+                    reviews: [],
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                    averageRating: (product as any).averageRating || 0,
+                    reviewCount: product._count.reviews,
+                  }}
+                  variant={viewMode === 'grid' ? 'default' : 'compact'}
+                />
+              ))
+            )}
+          </div>
+
+          {/* ページネーション */}
+          {pagination.pages > 1 && (
+            <div className="flex justify-center mt-8">
+              <div className="flex items-center gap-2">
+                {Array.from({ length: pagination.pages }, (_, i) => i + 1).map(
+                  page => (
+                    <Button
+                      key={page}
+                      variant={page === pagination.page ? 'primary' : 'ghost'}
+                      size="sm"
+                      onClick={() => {
+                        const params = new URLSearchParams(searchParams);
+                        params.set('page', page.toString());
+                        router.push(`/products?${params.toString()}` as any);
+                      }}
+                    >
+                      {page}
+                    </Button>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

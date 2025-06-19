@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { RegisterRequest } from '@/types/auth';
+import { sendWelcomeEmail } from '@/lib/services/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,6 +56,17 @@ export async function POST(request: NextRequest) {
         role: 'CUSTOMER',
       },
     });
+
+    // ウェルカムメールを送信
+    try {
+      await sendWelcomeEmail(user.email, {
+        customerName: user.name || 'お客様',
+        customerEmail: user.email,
+      });
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // メール送信失敗はユーザー登録の失敗にしない
+    }
 
     // JWT生成
     const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';

@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createOrder, getUserOrders } from '@/lib/services/order';
 import { getAuthPayload, createAuthErrorResponse } from '@/lib/auth-utils';
 import { CreateOrderRequest } from '@/types/order';
+import { sendOrderConfirmationEmail } from '@/lib/services/email';
+import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -70,6 +72,56 @@ export async function POST(request: NextRequest) {
     }
 
     const order = await createOrder(payload.userId, addressId, notes);
+
+    // 注文確認メールを送信
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: { name: true, email: true },
+      });
+
+      const orderDetails = await prisma.order.findUnique({
+        where: { id: order.id },
+        include: {
+          items: {
+            include: {
+              product: {
+                select: { name: true }
+              }
+            }
+          },
+          shippingAddress: true,
+        },
+      });
+
+      if (user && orderDetails) {
+        await sendOrderConfirmationEmail(user.email, {
+          orderNumber: order.orderNumber,
+          customerName: user.name,
+          customerEmail: user.email,
+          items: orderDetails.items.map(item => ({
+            name: item.product.name,
+            quantity: item.quantity,
+            price: Number(item.price),
+          })),
+          totalAmount: Number(order.totalAmount),
+          shippingCost: Number(order.shippingCost),
+          taxAmount: Number(order.taxAmount),
+          shippingAddress: {
+            name: orderDetails.shippingAddress.name,
+            address1: orderDetails.shippingAddress.address1,
+            address2: orderDetails.shippingAddress.address2,
+            city: orderDetails.shippingAddress.city,
+            state: orderDetails.shippingAddress.state,
+            zipCode: orderDetails.shippingAddress.zipCode,
+          },
+          orderDate: order.createdAt,
+        });
+      }
+    } catch (emailError) {
+      console.error('Failed to send order confirmation email:', emailError);
+      // メール送信失敗は注文処理の失敗にしない
+    }
 
     // Decimal型を数値に変換
     const serializedOrder = {

@@ -33,8 +33,12 @@ function LoginForm() {
     setIsLoading(true);
 
     try {
-      await login(formData);
-      router.push(redirectTo as any); // ログイン成功後は指定ページまたはホームへリダイレクト
+      const result = await login(formData.email, formData.password);
+      if (result.success) {
+        router.push(redirectTo as any); // ログイン成功後は指定ページまたはホームへリダイレクト
+      } else {
+        setError(result.error || 'ログインに失敗しました');
+      }
     } catch (error) {
       setError(
         error instanceof Error ? error.message : 'ログインに失敗しました'

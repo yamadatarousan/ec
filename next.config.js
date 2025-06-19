@@ -38,7 +38,7 @@ const nextConfig = {
         },
       };
     }
-    
+
     return config;
   },
   // 静的ファイルの最適化
