@@ -49,7 +49,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/shipping"
+                  href={'#' as any}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   配送について
@@ -57,7 +57,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/returns"
+                  href={'#' as any}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   返品・交換
@@ -72,7 +72,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
-                  href="/account"
+                  href={'#' as any}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   マイアカウント
@@ -80,7 +80,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/orders"
+                  href={'#' as any}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   注文履歴
@@ -96,7 +96,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/addresses"
+                  href={'#' as any}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   配送先住所
@@ -111,7 +111,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
-                  href="/help"
+                  href={'#' as any}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   ヘルプセンター
@@ -135,7 +135,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/security"
+                  href={'#' as any}
                   className="text-gray-400 hover:text-white transition-colors"
                 >
                   セキュリティ

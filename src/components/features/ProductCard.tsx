@@ -1,12 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Star, Heart, ShoppingCart } from 'lucide-react';
-import { Card, CardContent, Button, Badge } from '@/components/ui';
+import {
+  Card,
+  CardContent,
+  Button,
+  Badge,
+  useToast,
+  useErrorHandler,
+} from '@/components/ui';
 import { Product } from '@/types';
 import { formatPrice, cn } from '@/lib/utils';
+import { useCart } from '@/contexts/CartContext';
 
 interface ProductCardProps {
   product: Product;
@@ -19,48 +27,86 @@ interface ProductCardProps {
  * Amazon風の商品表示カードを提供
  * 商品画像、名前、価格、評価、アクションボタンを含む
  */
-export function ProductCard({
+function ProductCard({
   product,
   variant = 'default',
   showQuickActions = true,
 }: ProductCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const { addToCart } = useCart();
+  const { showSuccess } = useToast();
+  const { handleError } = useErrorHandler();
 
-  const primaryImage =
-    product.images.find(img => img.order === 0) || product.images[0];
-  const hasDiscount =
-    product.comparePrice && product.comparePrice > product.price;
-  const discountPercentage = hasDiscount
-    ? Math.round(
-        ((product.comparePrice! - product.price) / product.comparePrice!) * 100
-      )
-    : 0;
+  // メモ化された計算処理
+  const primaryImage = useMemo(
+    () => product.images.find(img => img.order === 0) || product.images[0],
+    [product.images]
+  );
+
+  const discountInfo = useMemo(() => {
+    const hasDiscount =
+      product.comparePrice && product.comparePrice > product.price;
+    const discountPercentage = hasDiscount
+      ? Math.round(
+          ((product.comparePrice! - product.price) / product.comparePrice!) *
+            100
+        )
+      : 0;
+    return { hasDiscount, discountPercentage };
+  }, [product.price, product.comparePrice]);
 
   /**
    * お気に入りトグル処理
    */
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsFavorited(!isFavorited);
-    // TODO: お気に入りAPI呼び出し
-  };
+  const handleFavoriteToggle = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsFavorited(!isFavorited);
+      // TODO: お気に入りAPI呼び出し
+    },
+    [isFavorited]
+  );
 
   /**
    * カートに追加処理
    */
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // TODO: カートAPI呼び出し
-    console.log('カートに追加:', product.id);
-  };
+  const handleAddToCart = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (isAddingToCart) return;
+
+      setIsAddingToCart(true);
+      try {
+        await addToCart(product.id, 1);
+        showSuccess(
+          'カートに追加しました',
+          `${product.name}をカートに追加しました`
+        );
+      } catch (error) {
+        handleError(error, 'カートへの追加に失敗しました');
+      } finally {
+        setIsAddingToCart(false);
+      }
+    },
+    [
+      isAddingToCart,
+      addToCart,
+      product.id,
+      product.name,
+      showSuccess,
+      handleError,
+    ]
+  );
 
   /**
    * 評価星の表示
    */
-  const renderStars = (rating: number) => {
+  const renderStars = useCallback((rating: number) => {
     return Array.from({ length: 5 }, (_, i) => (
       <Star
         key={i}
@@ -72,19 +118,26 @@ export function ProductCard({
         )}
       />
     ));
-  };
+  }, []);
 
-  const cardClasses = {
-    default: 'h-full',
-    compact: 'h-full',
-    featured: 'h-full border-2 border-orange-200',
-  };
+  // スタイルクラスのメモ化
+  const cardClasses = useMemo(
+    () => ({
+      default: 'h-full',
+      compact: 'h-full',
+      featured: 'h-full border-2 border-orange-200',
+    }),
+    []
+  );
 
-  const imageClasses = {
-    default: 'aspect-square',
-    compact: 'aspect-[4/3]',
-    featured: 'aspect-[3/2]',
-  };
+  const imageClasses = useMemo(
+    () => ({
+      default: 'aspect-square',
+      compact: 'aspect-[4/3]',
+      featured: 'aspect-[3/2]',
+    }),
+    []
+  );
 
   return (
     <Link href={`/products/${product.id}`}>
@@ -121,9 +174,9 @@ export function ProductCard({
             )}
 
             {/* ディスカウントバッジ */}
-            {hasDiscount && (
+            {discountInfo.hasDiscount && (
               <div className="absolute top-2 left-2 z-10 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-                -{discountPercentage}%
+                -{discountInfo.discountPercentage}%
               </div>
             )}
 
@@ -195,7 +248,7 @@ export function ProductCard({
               >
                 {formatPrice(product.price)}
               </span>
-              {hasDiscount && (
+              {discountInfo.hasDiscount && (
                 <span className="text-sm text-gray-500 line-through">
                   {formatPrice(product.comparePrice!)}
                 </span>
@@ -211,12 +264,16 @@ export function ProductCard({
             <div className="pt-2">
               <Button
                 onClick={handleAddToCart}
-                disabled={product.stock === 0}
+                disabled={product.stock === 0 || isAddingToCart}
                 className="w-full"
                 size="sm"
               >
                 <ShoppingCart className="h-4 w-4 mr-2" />
-                {product.stock === 0 ? '在庫切れ' : 'カートに追加'}
+                {product.stock === 0
+                  ? '在庫切れ'
+                  : isAddingToCart
+                    ? '追加中...'
+                    : 'カートに追加'}
               </Button>
             </div>
           )}
@@ -225,3 +282,16 @@ export function ProductCard({
     </Link>
   );
 }
+
+// React.memoで最適化 - productのidが同じ場合は再レンダリングを回避
+const MemoizedProductCard = React.memo(ProductCard, (prevProps, nextProps) => {
+  return (
+    prevProps.product.id === nextProps.product.id &&
+    prevProps.variant === nextProps.variant &&
+    prevProps.showQuickActions === nextProps.showQuickActions &&
+    prevProps.product.stock === nextProps.product.stock
+  );
+});
+
+// メモ化されたコンポーネントをデフォルトとしてエクスポート
+export { MemoizedProductCard as ProductCard };

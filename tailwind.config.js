@@ -4,23 +4,13 @@ module.exports = {
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/lib/**/*.{js,ts}',
+    './src/data/**/*.{js,ts}',
+    './src/types/**/*.{js,ts}',
   ],
+  important: false,
   theme: {
     extend: {
-      fontFamily: {
-        sans: [
-          'ui-sans-serif',
-          'system-ui',
-          '-apple-system',
-          'BlinkMacSystemFont',
-          'Segoe UI',
-          'Roboto',
-          'Helvetica Neue',
-          'Arial',
-          'Noto Sans',
-          'sans-serif',
-        ],
-      },
       colors: {
         amazon: {
           50: '#fef7ed',
@@ -41,5 +31,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require('@tailwindcss/line-clamp')],
+  plugins: [],
 };

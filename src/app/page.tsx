@@ -29,7 +29,7 @@ export default function Home() {
                 商品を探す
               </Link>
               <Link
-                href="/categories"
+                href="/products"
                 className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-md transition-colors"
               >
                 カテゴリーから探す
@@ -46,18 +46,18 @@ export default function Home() {
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {[
-            { name: '家電・PC', href: '/categories/electronics', emoji: '💻' },
-            { name: 'ファッション', href: '/categories/fashion', emoji: '👕' },
-            { name: '本・雑誌', href: '/categories/books', emoji: '📚' },
-            { name: 'ホーム・キッチン', href: '/categories/home', emoji: '🏠' },
-            { name: 'スポーツ', href: '/categories/sports', emoji: '⚽' },
-            { name: 'その他', href: '/categories/other', emoji: '🎁' },
+            { name: '家電・PC', href: '/products', emoji: '💻' },
+            { name: 'ファッション', href: '/products', emoji: '👕' },
+            { name: '本・雑誌', href: '/products', emoji: '📚' },
+            { name: 'ホーム・キッチン', href: '/products', emoji: '🏠' },
+            { name: 'スポーツ', href: '/products', emoji: '⚽' },
+            { name: 'その他', href: '/products', emoji: '🎁' },
           ].map(category => (
             <Card
               key={category.name}
               className="hover:shadow-md transition-shadow cursor-pointer"
             >
-              <Link href={category.href}>
+              <Link href={category.href as any}>
                 <CardContent className="p-6 text-center">
                   <div className="text-4xl mb-2">{category.emoji}</div>
                   <h3 className="font-medium text-sm">{category.name}</h3>
@@ -81,7 +81,7 @@ export default function Home() {
                   期間限定の特別価格で人気商品をお得にゲット！
                 </p>
                 <Link
-                  href="/deals"
+                  href="/products"
                   className="inline-flex items-center justify-center px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-medium rounded-md transition-colors"
                 >
                   セール商品を見る
@@ -97,7 +97,7 @@ export default function Home() {
                   厳選されたおすすめ商品をチェックしてみてください。
                 </p>
                 <Link
-                  href="/recommended"
+                  href="/products"
                   className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 bg-white hover:bg-gray-50 text-gray-900 font-medium rounded-md transition-colors"
                 >
                   おすすめを見る

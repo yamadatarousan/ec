@@ -11,29 +11,85 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { Button, Badge, Card, CardContent } from '@/components/ui';
-import { Product } from '@/types';
 import { formatPrice, cn } from '@/lib/utils';
+import { useCart } from '@/contexts/CartContext';
+import { ProductCard } from '@/components/features/ProductCard';
+import { ReviewForm, ReviewStats } from '@/components/features/ReviewForm';
+import { ReviewList } from '@/components/features/ReviewList';
+import { ProductStatus } from '@/types/product';
 
 interface ProductDetailClientProps {
-  product: Product;
+  product: {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    comparePrice?: number | null;
+    sku: string;
+    stock: number;
+    weight?: number | null;
+    dimensions?: string | null;
+    category: {
+      id: string;
+      name: string;
+      slug: string;
+    };
+    images: {
+      id: string;
+      url: string;
+      alt?: string | null;
+    }[];
+    reviews: {
+      id: string;
+      rating: number;
+      title?: string | null;
+      comment: string;
+      user: {
+        name?: string | null;
+        avatar?: string | null;
+      };
+    }[];
+    _count: {
+      reviews: number;
+    };
+  };
+  relatedProducts: {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    comparePrice?: number | null;
+    category: {
+      name: string;
+    };
+    images: {
+      url: string;
+      alt?: string | null;
+    }[];
+  }[];
 }
 
 /**
  * 商品詳細ページのクライアントコンポーネント
  * 商品詳細情報、画像ギャラリー、購入ボタンなどを表示
  */
-export function ProductDetailClient({ product }: ProductDetailClientProps) {
+export function ProductDetailClient({
+  product,
+  relatedProducts,
+}: ProductDetailClientProps) {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [isFavorited, setIsFavorited] = useState(false);
+  const [activeTab, setActiveTab] = useState('description');
+  const [reviewRefreshTrigger, setReviewRefreshTrigger] = useState(0);
+  const { addToCart, isLoading } = useCart();
 
   const primaryImage = product.images[selectedImageIndex] || product.images[0];
-  const hasDiscount =
-    product.comparePrice && product.comparePrice > product.price;
+  const price = product.price;
+  const comparePrice = product.comparePrice;
+  const hasDiscount = comparePrice && comparePrice > price;
   const discountPercentage = hasDiscount
-    ? Math.round(
-        ((product.comparePrice! - product.price) / product.comparePrice!) * 100
-      )
+    ? Math.round(((comparePrice! - price) / comparePrice!) * 100)
     : 0;
 
   /**
@@ -56,9 +112,12 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
   /**
    * カートに追加処理
    */
-  const handleAddToCart = () => {
-    // TODO: カートAPI呼び出し
-    console.log('カートに追加:', product.id, 'quantity:', quantity);
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(product.id, quantity);
+    } catch (error) {
+      console.error('カートに追加できませんでした:', error);
+    }
   };
 
   /**
@@ -145,16 +204,26 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
             </h1>
 
             {/* 評価 */}
-            {product.averageRating && (
+            {product.reviews.length > 0 && (
               <div className="flex items-center space-x-3 mb-4">
                 <div className="flex items-center space-x-1">
-                  {renderStars(product.averageRating)}
+                  {renderStars(
+                    product.reviews.reduce(
+                      (sum, review) => sum + review.rating,
+                      0
+                    ) / product.reviews.length
+                  )}
                 </div>
                 <span className="text-lg font-medium">
-                  {product.averageRating.toFixed(1)}
+                  {(
+                    product.reviews.reduce(
+                      (sum, review) => sum + review.rating,
+                      0
+                    ) / product.reviews.length
+                  ).toFixed(1)}
                 </span>
                 <span className="text-gray-600">
-                  ({product.reviewCount}件のレビュー)
+                  ({product._count.reviews}件のレビュー)
                 </span>
               </div>
             )}
@@ -164,11 +233,11 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           <div className="space-y-2">
             <div className="flex items-center space-x-4">
               <span className="text-3xl font-bold text-gray-900">
-                {formatPrice(product.price)}
+                {formatPrice(price)}
               </span>
               {hasDiscount && (
                 <span className="text-xl text-gray-500 line-through">
-                  {formatPrice(product.comparePrice!)}
+                  {formatPrice(comparePrice!)}
                 </span>
               )}
             </div>
@@ -226,17 +295,21 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
               <div className="space-y-3">
                 <button
                   onClick={handleAddToCart}
-                  disabled={product.stock === 0}
+                  disabled={product.stock === 0 || isLoading}
                   className={cn(
                     'w-full py-3 px-6 rounded-md font-medium transition-colors flex items-center justify-center space-x-2',
-                    product.stock === 0
+                    product.stock === 0 || isLoading
                       ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       : 'bg-yellow-400 hover:bg-yellow-500 text-gray-900'
                   )}
                 >
                   <ShoppingCart className="h-5 w-5" />
                   <span>
-                    {product.stock === 0 ? '在庫切れ' : 'カートに追加'}
+                    {product.stock === 0
+                      ? '在庫切れ'
+                      : isLoading
+                        ? '追加中...'
+                        : 'カートに追加'}
                   </span>
                 </button>
 
@@ -329,6 +402,199 @@ export function ProductDetailClient({ product }: ProductDetailClientProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* 商品詳細・レビュータブ */}
+      <div className="mt-16">
+        <div className="border-t border-gray-200 pt-16">
+          {/* タブナビゲーション */}
+          <div className="border-b border-gray-200 mb-8">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('description')}
+                className={cn(
+                  'py-2 px-1 border-b-2 font-medium text-sm transition-colors',
+                  activeTab === 'description'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                )}
+              >
+                商品説明
+              </button>
+              <button
+                onClick={() => setActiveTab('reviews')}
+                className={cn(
+                  'py-2 px-1 border-b-2 font-medium text-sm transition-colors',
+                  activeTab === 'reviews'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                )}
+              >
+                レビュー ({product._count.reviews})
+              </button>
+              <button
+                onClick={() => setActiveTab('specifications')}
+                className={cn(
+                  'py-2 px-1 border-b-2 font-medium text-sm transition-colors',
+                  activeTab === 'specifications'
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                )}
+              >
+                仕様
+              </button>
+            </nav>
+          </div>
+
+          {/* タブコンテンツ */}
+          {activeTab === 'description' && (
+            <div className="prose max-w-none">
+              <h3 className="text-lg font-semibold mb-4">商品説明</h3>
+              <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                {product.description}
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'reviews' && (
+            <div className="space-y-8">
+              {/* レビュー統計 */}
+              <ReviewStats
+                averageRating={
+                  product.reviews.length > 0
+                    ? product.reviews.reduce(
+                        (sum, review) => sum + review.rating,
+                        0
+                      ) / product.reviews.length
+                    : 0
+                }
+                totalReviews={product._count.reviews}
+                ratingDistribution={product.reviews.reduce(
+                  (acc, review) => {
+                    acc[review.rating] = (acc[review.rating] || 0) + 1;
+                    return acc;
+                  },
+                  {} as Record<number, number>
+                )}
+              />
+
+              {/* レビュー投稿フォーム */}
+              <ReviewForm
+                productId={product.id}
+                onReviewSubmitted={() =>
+                  setReviewRefreshTrigger(prev => prev + 1)
+                }
+              />
+
+              {/* レビュー一覧 */}
+              <ReviewList
+                productId={product.id}
+                refreshTrigger={reviewRefreshTrigger}
+              />
+            </div>
+          )}
+
+          {activeTab === 'specifications' && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4">商品仕様</h3>
+              <div className="bg-gray-50 rounded-lg p-6">
+                <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">SKU</dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {product.sku}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">
+                      カテゴリ
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {product.category.name}
+                    </dd>
+                  </div>
+                  {product.weight && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">
+                        重量
+                      </dt>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        {product.weight}g
+                      </dd>
+                    </div>
+                  )}
+                  {product.dimensions && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">
+                        サイズ
+                      </dt>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        {product.dimensions}
+                      </dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">
+                      在庫数
+                    </dt>
+                    <dd className="mt-1 text-sm text-gray-900">
+                      {product.stock}個
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 関連商品 */}
+      {relatedProducts.length > 0 && (
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">関連商品</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {relatedProducts.map(relatedProduct => (
+              <ProductCard
+                key={relatedProduct.id}
+                product={{
+                  id: relatedProduct.id,
+                  name: relatedProduct.name,
+                  description: relatedProduct.description,
+                  price: relatedProduct.price,
+                  comparePrice: relatedProduct.comparePrice,
+                  stock: 10, // 仮の在庫数
+                  sku: `SKU-${relatedProduct.id}`,
+                  averageRating: 4.5,
+                  reviewCount: 25,
+                  status: ProductStatus.ACTIVE,
+                  weight: null,
+                  dimensions: null,
+                  createdAt: new Date(),
+                  updatedAt: new Date(),
+                  categoryId: 'category-' + relatedProduct.id,
+                  category: {
+                    id: 'category-' + relatedProduct.id,
+                    name: relatedProduct.category.name,
+                    slug: relatedProduct.category.name.toLowerCase(),
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                  },
+                  images: relatedProduct.images.map((img, index) => ({
+                    id: `${relatedProduct.id}-${index}`,
+                    url: img.url,
+                    alt: img.alt,
+                    order: index,
+                    createdAt: new Date(),
+                    productId: relatedProduct.id,
+                  })),
+                  reviews: [],
+                }}
+                variant="compact"
+                showQuickActions={true}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

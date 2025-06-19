@@ -33,7 +33,9 @@
   "homepage": "https://github.com/yamadatarousan/ec#readme",
   "dependencies": {
     "@prisma/client": "^6.10.0",
+    "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
+    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.517.0",
     "next": "^15.3.3",
     "prisma": "^6.10.0",
@@ -42,19 +44,21 @@
     "tailwind-merge": "^3.3.1"
   },
   "devDependencies": {
-    "@tailwindcss/line-clamp": "^0.4.4",
-    "@tailwindcss/vite": "^4.1.10",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.0.3",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "@typescript-eslint/eslint-plugin": "^8.34.1",
     "@typescript-eslint/parser": "^8.34.1",
+    "autoprefixer": "^10.4.21",
     "eslint": "^9.29.0",
     "eslint-config-next": "^15.3.3",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.5.0",
+    "postcss": "^8.5.6",
     "prettier": "^3.5.3",
-    "tailwindcss": "^4.1.10",
+    "tailwindcss": "^3.4.15",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   }

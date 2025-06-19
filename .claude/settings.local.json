@@ -6,7 +6,26 @@
       "Bash(npm run lint)",
       "Bash(npm run format:*)",
       "Bash(git add:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "Bash(rg:*)",
+      "Bash(pkill:*)",
+      "Bash(npm run:*)",
+      "Bash(createdb:*)",
+      "Bash(find:*)",
+      "Bash(curl:*)",
+      "Bash(npx prisma:*)",
+      "Bash(pg_isready:*)",
+      "Bash(lsof:*)",
+      "Bash(node:*)",
+      "Bash(cat:*)",
+      "Bash(rm:*)",
+      "Bash(npx tsc:*)",
+      "Bash(mkdir:*)",
+      "Bash(git commit:*)",
+      "Bash(git pull:*)"
     ],
     "deny": []
   }
