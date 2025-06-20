@@ -7,6 +7,8 @@ import { Eye, EyeOff, Shield } from 'lucide-react';
 import { Button, Input, Card, CardContent } from '@/components/ui';
 import { useAuth } from '@/contexts/AuthContext';
 
+export const dynamic = 'force-dynamic';
+
 /**
  * 管理者ログインページ
  * 管理者専用のログイン画面

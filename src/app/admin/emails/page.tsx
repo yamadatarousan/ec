@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, Button, Input, Badge } from '@/components/ui';
 
+export const dynamic = 'force-dynamic';
+
 export default function AdminEmailsPage() {
   const [activeTab, setActiveTab] = useState<'templates' | 'logs' | 'stats'>(
     'templates'

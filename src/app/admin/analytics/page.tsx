@@ -17,6 +17,8 @@ import {
 } from 'lucide-react';
 import { Card, CardContent, Button, Input } from '@/components/ui';
 
+export const dynamic = 'force-dynamic';
+
 interface AnalyticsData {
   overview: {
     totalRevenue: number;

@@ -16,6 +16,8 @@ import {
 import { Card, CardContent, Button, Input, Badge } from '@/components/ui';
 import { InventoryAlert } from '@/lib/services/inventory';
 
+export const dynamic = 'force-dynamic';
+
 interface InventoryStats {
   totalProducts: number;
   lowStockCount: number;
