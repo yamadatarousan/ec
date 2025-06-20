@@ -53,7 +53,7 @@ export class EmailService {
 
     // 開発環境ではEtherealを使用（テスト用）
     if (process.env.NODE_ENV === 'development' && !process.env.SMTP_HOST) {
-      this.transporter = nodemailer.createTransporter({
+      this.transporter = nodemailer.createTransport({
         host: 'smtp.ethereal.email',
         port: 587,
         secure: false,
@@ -63,11 +63,13 @@ export class EmailService {
         },
       });
     } else {
-      this.transporter = nodemailer.createTransporter(emailConfig);
+      this.transporter = nodemailer.createTransport(emailConfig);
     }
   }
 
-  async sendEmail(request: SendEmailRequest): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  async sendEmail(
+    request: SendEmailRequest
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
       const { to, cc, bcc, template, attachments } = request;
 

@@ -49,7 +49,9 @@ export interface WelcomeEmailData {
 /**
  * 注文確認メールテンプレート
  */
-export function generateOrderConfirmationEmail(data: OrderConfirmationData): EmailTemplate {
+export function generateOrderConfirmationEmail(
+  data: OrderConfirmationData
+): EmailTemplate {
   const {
     orderNumber,
     customerName,
@@ -114,14 +116,18 @@ export function generateOrderConfirmationEmail(data: OrderConfirmationData): Ema
             </tr>
           </thead>
           <tbody>
-            ${items.map(item => `
+            ${items
+              .map(
+                item => `
               <tr>
                 <td>${item.name}</td>
                 <td>${item.quantity}</td>
                 <td>${formatPrice(item.price)}</td>
                 <td>${formatPrice(item.price * item.quantity)}</td>
               </tr>
-            `).join('')}
+            `
+              )
+              .join('')}
           </tbody>
           <tfoot>
             <tr>
@@ -177,9 +183,12 @@ ${customerName} 様
 注文番号: ${orderNumber}
 
 ■ ご注文商品
-${items.map(item => 
-  `${item.name} × ${item.quantity} = ${formatPrice(item.price * item.quantity)}`
-).join('\n')}
+${items
+  .map(
+    item =>
+      `${item.name} × ${item.quantity} = ${formatPrice(item.price * item.quantity)}`
+  )
+  .join('\n')}
 
 商品合計: ${formatPrice(totalAmount - shippingCost - taxAmount)}
 送料: ${formatPrice(shippingCost)}
@@ -207,8 +216,11 @@ support@example.com | 03-1234-5678
 /**
  * 在庫アラートメールテンプレート
  */
-export function generateInventoryAlertEmail(data: InventoryAlertData): EmailTemplate {
-  const { productName, productSku, currentStock, threshold, categoryName } = data;
+export function generateInventoryAlertEmail(
+  data: InventoryAlertData
+): EmailTemplate {
+  const { productName, productSku, currentStock, threshold, categoryName } =
+    data;
 
   const subject = `【在庫アラート】${productName} の在庫が不足しています`;
 
@@ -281,7 +293,9 @@ ECストア 在庫管理システム
 /**
  * パスワードリセットメールテンプレート
  */
-export function generatePasswordResetEmail(data: PasswordResetData): EmailTemplate {
+export function generatePasswordResetEmail(
+  data: PasswordResetData
+): EmailTemplate {
   const { customerName, resetLink, expiresAt } = data;
 
   const subject = 'パスワードリセットのご案内';

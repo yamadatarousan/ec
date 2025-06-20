@@ -23,12 +23,13 @@ model User {
   updatedAt DateTime @updatedAt
 
   // リレーション
-  orders       Order[]
-  cart         CartItem[]
-  favorites    Favorite[]
-  addresses    Address[]
-  reviews      Review[]
-  productViews ProductView[]
+  orders            Order[]
+  cart              CartItem[]
+  favorites         Favorite[]
+  addresses         Address[]
+  reviews           Review[]
+  productViews      ProductView[]
+  pushSubscriptions PushSubscription[]
 
   @@map("users")
 }
@@ -87,6 +88,13 @@ model Product {
   reviews      Review[]
   productViews ProductView[]
 
+  // インデックス最適化
+  @@index([status])
+  @@index([categoryId])
+  @@index([price])
+  @@index([createdAt])
+  @@index([status, categoryId])
+  @@index([status, price])
   @@map("products")
 }
 
@@ -166,6 +174,12 @@ model Order {
   // リレーション
   items OrderItem[]
 
+  // インデックス最適化
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId, status])
+  @@index([userId, createdAt])
   @@map("orders")
 }
 
@@ -251,5 +265,28 @@ model ProductView {
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
+  // インデックス最適化
+  @@index([productId])
+  @@index([userId])
+  @@index([viewedAt])
+  @@index([productId, viewedAt])
+  @@index([sessionId])
   @@map("product_views")
+}
+
+/// プッシュ通知登録
+/// PWAのプッシュ通知登録情報
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dhKey String
+  authKey   String
+  userId    String?
+  sessionId String? // 未ログインユーザー用セッションID
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("push_subscriptions")
 }
