@@ -43,12 +43,14 @@
   "homepage": "https://github.com/yamadatarousan/ec#readme",
   "dependencies": {
     "@prisma/client": "^6.10.0",
+    "@tailwindcss/postcss": "^4.1.10",
     "@types/nodemailer": "^6.4.17",
     "bcryptjs": "^3.0.2",
     "clsx": "^2.1.1",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.518.0",
     "next": "^15.3.3",
+    "next-intl": "^4.1.0",
     "nodemailer": "^7.0.3",
     "prisma": "^6.10.0",
     "react": "^19.1.0",
@@ -61,6 +63,7 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/bcryptjs": "^2.4.6",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.0.3",
     "@types/react": "^19.1.8",
@@ -78,6 +81,7 @@
     "postcss": "^8.5.6",
     "prettier": "^3.5.3",
     "tailwindcss": "^4.1.10",
+    "ts-jest": "^29.4.0",
     "tsx": "^4.20.3",
     "typescript": "^5.8.3"
   }

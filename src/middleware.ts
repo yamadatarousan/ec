@@ -1,5 +1,12 @@
+import createIntlMiddleware from 'next-intl/middleware';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/auth';
+
+// 国際化ミドルウェアを作成
+const intlMiddleware = createIntlMiddleware({
+  locales: ['ja', 'en'],
+  defaultLocale: 'ja',
+});
 
 // レート制限用のメモリストア（本番環境ではRedisなどの外部ストアを使用）
 const rateLimitStore = new Map<string, { count: number; timestamp: number }>();
@@ -149,24 +156,33 @@ function setSecurityHeaders(response: NextResponse): NextResponse {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // レート制限チェック
-  const { config, prefix } = getRateLimitConfig(pathname);
-  const rateLimitKey = getRateLimitKey(request, prefix);
+  // API routes はスキップして国際化処理を行わない
+  if (pathname.startsWith('/api/')) {
+    // レート制限チェック
+    const { config, prefix } = getRateLimitConfig(pathname);
+    const rateLimitKey = getRateLimitKey(request, prefix);
 
-  if (!checkRateLimit(rateLimitKey, config)) {
-    return new NextResponse(
-      JSON.stringify({
-        error: 'Rate limit exceeded',
-        message: 'Too many requests. Please try again later.',
-      }),
-      {
-        status: 429,
-        headers: {
-          'Content-Type': 'application/json',
-          'Retry-After': '60',
-        },
-      }
-    );
+    if (!checkRateLimit(rateLimitKey, config)) {
+      return new NextResponse(
+        JSON.stringify({
+          error: 'Rate limit exceeded',
+          message: 'Too many requests. Please try again later.',
+        }),
+        {
+          status: 429,
+          headers: {
+            'Content-Type': 'application/json',
+            'Retry-After': '60',
+          },
+        }
+      );
+    }
+  } else {
+    // 国際化ミドルウェアを実行
+    const intlResponse = intlMiddleware(request);
+    if (intlResponse) {
+      return intlResponse;
+    }
   }
 
   // CSRF保護が必要なパスのチェック

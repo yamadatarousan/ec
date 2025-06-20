@@ -1,23 +1,19 @@
 import { render, RenderOptions } from '@testing-library/react'
-import { ReactElement } from 'react'
+import React, { ReactElement } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { CartProvider } from '@/contexts/CartContext'
 
 // Mock router context
 const MockRouterContext = ({ children }: { children: React.ReactNode }) => {
-  return <div>{children}</div>
+  return React.createElement('div', {}, children)
 }
 
 // Create a custom render function that includes providers
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <MockRouterContext>
-      <AuthProvider>
-        <CartProvider>
-          {children}
-        </CartProvider>
-      </AuthProvider>
-    </MockRouterContext>
+  return React.createElement(MockRouterContext, { children },
+    React.createElement(AuthProvider, { children: 
+      React.createElement(CartProvider, { children })
+    })
   )
 }
 
