@@ -1,30 +1,32 @@
-import { render, RenderOptions } from '@testing-library/react'
-import React, { ReactElement } from 'react'
-import { AuthProvider } from '@/contexts/AuthContext'
-import { CartProvider } from '@/contexts/CartContext'
-import { ProductStatus } from '@/types/product'
+import { render, RenderOptions } from '@testing-library/react';
+import React, { ReactElement } from 'react';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { CartProvider } from '@/contexts/CartContext';
+import { ProductStatus } from '@/types/product';
 
 // Mock router context
 const MockRouterContext = ({ children }: { children: React.ReactNode }) => {
-  return React.createElement('div', {}, children)
-}
+  return React.createElement('div', {}, children);
+};
 
 // Create a custom render function that includes providers
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
-  return React.createElement(MockRouterContext, { children },
-    React.createElement(AuthProvider, { children: 
-      React.createElement(CartProvider, { children })
+  return React.createElement(
+    MockRouterContext,
+    { children },
+    React.createElement(AuthProvider, {
+      children: React.createElement(CartProvider, { children }),
     })
-  )
-}
+  );
+};
 
 const customRender = (
   ui: ReactElement,
   options?: Omit<RenderOptions, 'wrapper'>
-) => render(ui, { wrapper: AllTheProviders, ...options })
+) => render(ui, { wrapper: AllTheProviders, ...options });
 
-export * from '@testing-library/react'
-export { customRender as render }
+export * from '@testing-library/react';
+export { customRender as render };
 
 // Mock user data for testing
 export const mockUser = {
@@ -34,7 +36,7 @@ export const mockUser = {
   role: 'CUSTOMER' as const,
   createdAt: new Date(),
   updatedAt: new Date(),
-}
+};
 
 export const mockAdmin = {
   id: 'test-admin-id',
@@ -43,7 +45,7 @@ export const mockAdmin = {
   role: 'ADMIN' as const,
   createdAt: new Date(),
   updatedAt: new Date(),
-}
+};
 
 // Mock product data
 export const mockProduct = {
@@ -69,7 +71,7 @@ export const mockProduct = {
       order: 0,
       productId: 'test-product-id',
       createdAt: new Date(),
-    }
+    },
   ],
   category: {
     id: 'test-category-id',
@@ -79,7 +81,7 @@ export const mockProduct = {
     updatedAt: new Date(),
   },
   reviews: [],
-}
+};
 
 // Mock order data
 export const mockOrder = {
@@ -101,20 +103,20 @@ export const mockOrder = {
       price: 1000,
       orderId: 'test-order-id',
       product: mockProduct,
-    }
+    },
   ],
-}
+};
 
 // API response helpers
 export const createMockApiResponse = <T>(data: T, success = true) => ({
   success,
   data,
   ...(success ? {} : { error: 'Test error message' }),
-})
+});
 
 // Test utilities for async operations
-export const waitForApiCall = () => 
-  new Promise(resolve => setTimeout(resolve, 100))
+export const waitForApiCall = () =>
+  new Promise(resolve => setTimeout(resolve, 100));
 
 // Mock fetch response
 export const createMockFetchResponse = <T>(data: T, status = 200) => ({
@@ -133,20 +135,24 @@ export const createMockFetchResponse = <T>(data: T, status = 200) => ({
   arrayBuffer: jest.fn(),
   blob: jest.fn(),
   formData: jest.fn(),
-})
+});
 
 // Local storage test helpers
 export const mockLocalStorage = {
   clear: () => {
-    (global.localStorage.clear as jest.Mock).mockClear()
+    (global.localStorage.clear as jest.Mock).mockClear();
   },
   getItem: (key: string) => {
-    return (global.localStorage.getItem as jest.Mock).mockReturnValue(null)
+    return (global.localStorage.getItem as jest.Mock).mockReturnValue(null);
   },
   setItem: (key: string, value: string) => {
-    return (global.localStorage.setItem as jest.Mock).mockImplementation(() => {})
+    return (global.localStorage.setItem as jest.Mock).mockImplementation(
+      () => {}
+    );
   },
   removeItem: (key: string) => {
-    return (global.localStorage.removeItem as jest.Mock).mockImplementation(() => {})
+    return (global.localStorage.removeItem as jest.Mock).mockImplementation(
+      () => {}
+    );
   },
-}
+};
