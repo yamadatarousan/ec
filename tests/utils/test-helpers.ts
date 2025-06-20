@@ -2,6 +2,7 @@ import { render, RenderOptions } from '@testing-library/react'
 import React, { ReactElement } from 'react'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { CartProvider } from '@/contexts/CartContext'
+import { ProductStatus } from '@/types/product'
 
 // Mock router context
 const MockRouterContext = ({ children }: { children: React.ReactNode }) => {
@@ -53,7 +54,7 @@ export const mockProduct = {
   comparePrice: 1200,
   sku: 'TEST-SKU-001',
   stock: 10,
-  status: 'ACTIVE' as const,
+  status: ProductStatus.ACTIVE,
   categoryId: 'test-category-id',
   weight: 100,
   dimensions: JSON.stringify({ width: 10, height: 20, depth: 5 }),
@@ -73,7 +74,11 @@ export const mockProduct = {
   category: {
     id: 'test-category-id',
     name: 'Test Category',
+    slug: 'test-category',
+    createdAt: new Date(),
+    updatedAt: new Date(),
   },
+  reviews: [],
 }
 
 // Mock order data

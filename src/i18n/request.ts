@@ -4,7 +4,8 @@ import { headers } from 'next/headers';
 export default getRequestConfig(async () => {
   // Provide a static locale, fetch a user setting,
   // read from `headers()`, `cookies()`, etc.
-  const locale = headers().get('x-locale') ?? 'ja';
+  const headersList = await headers();
+  const locale = headersList.get('x-locale') ?? 'ja';
 
   return {
     locale,

@@ -22,7 +22,7 @@ export function LanguageSwitcher() {
     segments[1] = newLocale;
     const newPath = segments.join('/');
 
-    router.push(newPath);
+    router.push(newPath as any);
     setIsOpen(false);
   };
 

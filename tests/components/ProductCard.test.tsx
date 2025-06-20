@@ -1,6 +1,7 @@
 import { screen, fireEvent, waitFor } from '@testing-library/react'
 import { render, mockProduct } from '../utils/test-helpers'
-import ProductCard from '@/components/ui/ProductCard'
+import { ProductCard } from '@/components/features/ProductCard'
+import { ProductStatus } from '@/types/product'
 
 // Mock the cart context
 const mockAddToCart = jest.fn()
@@ -80,7 +81,7 @@ describe('ProductCard', () => {
   })
 
   it('商品ステータスが非アクティブの場合、適切に表示される', () => {
-    const inactiveProduct = { ...mockProduct, status: 'INACTIVE' as const }
+    const inactiveProduct = { ...mockProduct, status: ProductStatus.INACTIVE }
     render(<ProductCard product={inactiveProduct} />)
     
     expect(screen.getByText(/販売終了/i)).toBeInTheDocument()
