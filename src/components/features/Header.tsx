@@ -18,6 +18,7 @@ import {
   LogOut,
   LogIn,
 } from 'lucide-react';
+import { LanguageSwitcher } from './LanguageSwitcher';
 import { Button, Input } from '@/components/ui';
 import { SearchSuggestions } from './SearchSuggestions';
 import { useCart } from '@/contexts/CartContext';
@@ -239,6 +240,9 @@ function Header() {
                 <span className="hidden sm:block text-sm">ログイン</span>
               </Link>
             )}
+
+            {/* 言語切り替え */}
+            <LanguageSwitcher />
 
             {/* ショッピングカート */}
             <Link
