@@ -87,21 +87,22 @@ export async function POST(request: NextRequest) {
 // データバリデーション関数
 function isOrderConfirmationData(data: any): data is OrderConfirmationData {
   return (
-    data &&
-    typeof data.orderNumber === 'string' &&
-    typeof data.customerName === 'string' &&
-    typeof data.customerEmail === 'string' &&
-    Array.isArray(data.items) &&
-    typeof data.totalAmount === 'number' &&
-    typeof data.shippingCost === 'number' &&
-    typeof data.taxAmount === 'number' &&
-    data.shippingAddress &&
-    typeof data.shippingAddress.name === 'string' &&
-    typeof data.shippingAddress.address1 === 'string' &&
-    typeof data.shippingAddress.city === 'string' &&
-    typeof data.shippingAddress.state === 'string' &&
-    typeof data.shippingAddress.zipCode === 'string' &&
-    data.orderDate instanceof Date || typeof data.orderDate === 'string'
+    (data &&
+      typeof data.orderNumber === 'string' &&
+      typeof data.customerName === 'string' &&
+      typeof data.customerEmail === 'string' &&
+      Array.isArray(data.items) &&
+      typeof data.totalAmount === 'number' &&
+      typeof data.shippingCost === 'number' &&
+      typeof data.taxAmount === 'number' &&
+      data.shippingAddress &&
+      typeof data.shippingAddress.name === 'string' &&
+      typeof data.shippingAddress.address1 === 'string' &&
+      typeof data.shippingAddress.city === 'string' &&
+      typeof data.shippingAddress.state === 'string' &&
+      typeof data.shippingAddress.zipCode === 'string' &&
+      data.orderDate instanceof Date) ||
+    typeof data.orderDate === 'string'
   );
 }
 

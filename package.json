@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:analyze": "ANALYZE=true next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
@@ -17,6 +18,11 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "security:audit": "npm audit --audit-level moderate",
+    "performance:test": "echo \"Performance testing would go here\"",
+    "docker:build": "docker build -t ec-app .",
+    "docker:run": "docker run -p 3000:3000 ec-app",
+    "production:start": "NODE_ENV=production npm start",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

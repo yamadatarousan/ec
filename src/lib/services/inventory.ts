@@ -120,10 +120,14 @@ export async function sendInventoryAlerts(
         if (result.success) {
           sentCount++;
         } else {
-          errors.push(`Failed to send alert for ${alert.product.name}: ${result.error}`);
+          errors.push(
+            `Failed to send alert for ${alert.product.name}: ${result.error}`
+          );
         }
       } catch (error) {
-        errors.push(`Error sending alert for ${alert.product.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        errors.push(
+          `Error sending alert for ${alert.product.name}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
       }
     }
 
