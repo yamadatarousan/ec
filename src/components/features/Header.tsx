@@ -242,7 +242,7 @@ function Header() {
             )}
 
             {/* 言語切り替え */}
-            <LanguageSwitcher />
+            {/* <LanguageSwitcher /> 一時的に無効化 */}
 
             {/* ショッピングカート */}
             <Link

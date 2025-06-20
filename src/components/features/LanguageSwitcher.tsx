@@ -2,7 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl';
 import { useRouter, usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Globe } from 'lucide-react';
 
 const languages = [
@@ -11,10 +11,22 @@ const languages = [
 ];
 
 export function LanguageSwitcher() {
+  const [mounted, setMounted] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  // Hooks must be called in the same order every time
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+
+  // クライアントサイドでのみマウント
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // サーバーサイドでは何も表示しない
+  if (!mounted) {
+    return <div className="w-12 h-9 bg-gray-100 rounded animate-pulse"></div>;
+  }
 
   const handleLanguageChange = (newLocale: string) => {
     // URLのlocale部分を新しいlocaleに置き換える
@@ -22,7 +34,7 @@ export function LanguageSwitcher() {
     segments[1] = newLocale;
     const newPath = segments.join('/');
 
-    router.push(newPath);
+    router.push(newPath as any);
     setIsOpen(false);
   };
 

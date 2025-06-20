@@ -28,7 +28,13 @@
       "Bash(git pull:*)",
       "Bash(gh pr create:*)",
       "Bash(touch:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm test)",
+      "Bash(npx playwright:*)",
+      "Bash(true)",
+      "Bash(gh pr view:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)"
     ],
     "deny": []
   }

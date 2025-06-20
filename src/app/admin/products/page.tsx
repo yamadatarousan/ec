@@ -20,6 +20,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, Button, Input, Badge } from '@/components/ui';
 
+export const dynamic = 'force-dynamic';
+
 interface Product {
   id: string;
   name: string;

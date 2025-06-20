@@ -1,13 +1,8 @@
 const createNextIntlPlugin = require('next-intl/plugin');
-const withNextIntl = createNextIntlPlugin();
+const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    typedRoutes: true,
-    optimizePackageImports: ['lucide-react'],
-    optimizeCss: false, // crittersエラーを回避
-  },
   images: {
     domains: ['localhost'],
     remotePatterns: [
@@ -124,13 +119,19 @@ const nextConfig = {
   compress: true,
   // 本番環境でのパフォーマンス最適化
   // swcMinify: true, // Next.js 15では削除済み
-  
+
   // 出力設定（本番環境最適化）
-  output: 'standalone',
-  
+  // output: 'standalone', // 一時的に無効化
+
+  experimental: {
+    typedRoutes: true,
+    optimizePackageImports: ['lucide-react'],
+    optimizeCss: false, // crittersエラーを回避
+  },
+
   // 静的ページ生成タイムアウト
   staticPageGenerationTimeout: 300,
-  
+
   // セキュリティ設定
   poweredByHeader: false,
 
